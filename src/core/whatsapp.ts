@@ -24,8 +24,16 @@ export class WhatsAppClient {
   private messageBuffer: MessageBuffer | undefined;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private qrCode: string | null = null; // Store QR code
 
   constructor() { }
+
+  public getStatus() {
+    return {
+      status: this.sock?.user ? 'CONNECTED' : (this.qrCode ? 'WAITING_FOR_QR' : 'DISCONNECTED'),
+      qr: this.qrCode
+    };
+  }
 
   async initialize() {
     console.log('🔌 Initializing Representative Agent...');
@@ -51,6 +59,7 @@ export class WhatsAppClient {
 
       if (qr) {
         console.log('📌 Scan the QR Code below to connect:');
+        this.qrCode = qr; // Save QR to state
         require('qrcode-terminal').generate(qr, { small: true });
       }
 
@@ -83,6 +92,7 @@ export class WhatsAppClient {
         }
       } else if (connection === 'open') {
         console.log('✅ Representative Online!');
+        this.qrCode = null; // Clear QR code
         this.reconnectAttempts = 0; // Reset counter on successful connection
 
         // Initialize MessageSender with the connected socket

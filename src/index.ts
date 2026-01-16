@@ -1,14 +1,35 @@
+import express from 'express';
+import cors from 'cors';
 import { WhatsAppClient } from './core/whatsapp';
+
+const app = express();
+app.use(cors());
+
+// Initialize Client
+const client = new WhatsAppClient();
+
+// API Endpoints
+app.get('/api/status', (req, res) => {
+    res.json(client.getStatus());
+});
+
+app.post('/api/settings', (req, res) => {
+    // TODO: Implement settings update
+    res.json({ success: true });
+});
 
 const start = async () => {
     try {
         console.log('🚀 Starting Autonomous Representative Agent...');
 
-        // 1. Database connection is handled automatically by Drizzle config in ./database/index.ts
-
-        // 2. Initialize WhatsApp Client (The Body)
-        const client = new WhatsAppClient();
+        // 1. Initialize WhatsApp Client
         await client.initialize();
+
+        // 2. Start API Server
+        const PORT = 3001;
+        app.listen(PORT, () => {
+            console.log(`🌍 API Server running on port ${PORT}`);
+        });
 
         console.log('✨ System Operational. Waiting for messages...');
 
