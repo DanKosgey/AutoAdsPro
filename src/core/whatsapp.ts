@@ -25,6 +25,7 @@ export class WhatsAppClient {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private qrCode: string | null = null; // Store QR code
+  private lastConnectTime: number = 0;
 
   constructor() { }
 
@@ -81,6 +82,17 @@ export class WhatsAppClient {
 
         const shouldReconnect = error !== DisconnectReason.loggedOut;
 
+        // FLAPPING CHECK: Only reset attempts if last session was > 60s
+        if (shouldReconnect) {
+          const sessionDuration = Date.now() - this.lastConnectTime;
+          if (this.lastConnectTime > 0 && sessionDuration > 60000) {
+            console.log(`✅ Connection stable (${Math.round(sessionDuration / 1000)}s). Resetting backoff.`);
+            this.reconnectAttempts = 0;
+          } else if (this.lastConnectTime > 0) {
+            console.warn(`⚠️ Connection unstable (${Math.round(sessionDuration / 1000)}s). Escalating backoff to avoid conflict loop.`);
+          }
+        }
+
         if (shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           const delay = Math.min(3000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
@@ -92,8 +104,8 @@ export class WhatsAppClient {
         }
       } else if (connection === 'open') {
         console.log('✅ Representative Online!');
-        this.qrCode = null; // Clear QR code
-        this.reconnectAttempts = 0; // Reset counter on successful connection
+        this.qrCode = null;
+        this.lastConnectTime = Date.now();
 
         // Initialize MessageSender with the connected socket
         this.messageSender = new MessageSender(this.sock!);
