@@ -42,10 +42,17 @@ export class GeminiService {
 
           console.warn(`⚠️ Key ending in ...${key.slice(-4)} hit Rate Limit (429). Switching keys...`);
           keyManager.markRateLimited(key, seconds);
-          continue; // Retry loop with next key
+          continue;
         }
 
-        // If it's NOT a rate limit (e.g. 400 Bad Request), throw immediately
+        // Check for 400 (Invalid/Expired Key)
+        if (error.status === 400 || error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key expired')) {
+          console.warn(`❌ Key ending in ...${key.slice(-4)} is INVALID/EXPIRED. Skipping...`);
+          // Ideally we remove it from the pool, but for now just skipping this turn is enough to save the request
+          continue;
+        }
+
+        // If it's another error, throw immediately
         throw error;
       }
     }
