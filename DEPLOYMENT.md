@@ -213,6 +213,15 @@ After successful deployment:
 3. **Document any issues**: Report in logs
 4. **Consider backup**: Set up regular contact data backups
 
+## Web Control Panel
+
+The deployed application includes a web dashboard for easier management:
+
+1.  **Access**: Open `https://your-app-name.onrender.com`
+2.  **Dashboard**: View message stats and recent activity feed.
+3.  **Chats**: View conversation history.
+4.  **Disconnect**: Go to **Settings > Danger Zone** to disconnect and reset the session. This is useful if the connection gets stuck or you want to pair a different device.
+
 ## Support
 
 If you encounter issues not covered here:

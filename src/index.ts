@@ -4,7 +4,7 @@ import path from 'path';
 import { config } from './config/env';
 import { WhatsAppClient } from './core/whatsapp';
 import { db } from './database';
-import { contacts, messageLogs } from './database/schema';
+import { contacts, messageLogs, authCredentials } from './database/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { sessionManager } from './services/sessionManager';
 
@@ -123,6 +123,67 @@ app.get('/api/stats', async (req, res) => {
     } catch (error) {
         console.error('Failed to fetch stats:', error);
         res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+
+
+app.get('/api/activity', async (req, res) => {
+    try {
+        const recentActivity = await db.select({
+            id: messageLogs.id,
+            type: messageLogs.role,
+            content: messageLogs.content,
+            timestamp: messageLogs.createdAt,
+            contactName: contacts.name,
+            contactPhone: contacts.phone
+        })
+            .from(messageLogs)
+            .leftJoin(contacts, eq(messageLogs.contactPhone, contacts.phone))
+            .orderBy(desc(messageLogs.createdAt))
+            .limit(20);
+
+        res.json(recentActivity.map(activity => ({
+            id: activity.id,
+            type: activity.type === 'agent' ? 'outgoing' : 'incoming',
+            description: activity.type === 'agent'
+                ? `Sent message to ${activity.contactName || activity.contactPhone}`
+                : `Received message from ${activity.contactName || activity.contactPhone}`,
+            detail: activity.content,
+            time: activity.timestamp,
+            icon: activity.type === 'agent' ? 'message-out' : 'message-in'
+        })));
+    } catch (error) {
+        console.error('Failed to fetch activity:', error);
+        res.status(500).json({ error: 'Failed to fetch activity' });
+    }
+});
+
+app.post('/api/disconnect', async (req, res) => {
+    try {
+        console.log('🔌 Disconnect requested via API');
+
+        // 1. Release Session Lock
+        await sessionManager.releaseLock();
+
+        // 2. Clear Auth Credentials to force logout
+        await db.delete(authCredentials);
+
+        console.log('✅ Auth credentials cleared and lock released.');
+
+        // 3. Send success response before exiting
+        res.json({ success: true, message: 'Disconnected. Service will restart and wait for new QR.' });
+
+        // 4. Force exit to restart service (Render will restart it)
+        // Give it a moment to send the response
+        setTimeout(() => {
+            console.log('👋 Exiting process to trigger restart...');
+            process.exit(0);
+        }, 1000);
+
+    } catch (error) {
+        console.error('Disconnect failed:', error);
+        res.status(500).json({ error: 'Failed to disconnect' });
     }
 });
 

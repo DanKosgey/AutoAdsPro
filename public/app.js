@@ -180,20 +180,53 @@ function updateDashboardStats(stats) {
     document.getElementById('active-contacts').textContent = stats.activeContacts;
 }
 
-function loadRecentActivity() {
+async function loadRecentActivity() {
     const activityList = document.getElementById('activity-list');
 
-    // Mock data - replace with real API call
-    const activities = [];
+    try {
+        const response = await fetch(`${API_BASE}/api/activity`);
+        const activities = await response.json();
 
-    if (activities.length === 0) {
+        if (activities.length === 0) {
+            activityList.innerHTML = `
+                <div class="activity-empty">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="32" fill="#f3f4f6"/>
+                        <path d="M32 20v24M20 32h24" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p>No recent activity</p>
+                </div>
+            `;
+        } else {
+            activityList.innerHTML = activities.map(activity => `
+                <div class="activity-item" style="display: flex; gap: 1rem; align-items: start; padding: 1rem; background: var(--bg-primary); border-radius: 12px;">
+                    <div class="activity-icon" style="
+                        width: 32px; height: 32px; 
+                        background: ${activity.type === 'outgoing' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(102, 126, 234, 0.1)'}; 
+                        color: ${activity.type === 'outgoing' ? 'var(--success)' : 'var(--primary)'};
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                           ${activity.type === 'outgoing'
+                    ? '<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />' // Send icon
+                    : '<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' // Message icon
+                }
+                        </svg>
+                    </div>
+                    <div class="activity-info" style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-weight: 600; font-size: 0.875rem;">${activity.description}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">${formatTime(new Date(activity.time).getTime())}</span>
+                        </div>
+                        <p style="font-size: 0.875rem; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${activity.detail}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load activity:', error);
         activityList.innerHTML = `
             <div class="activity-empty">
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                    <circle cx="32" cy="32" r="32" fill="#f3f4f6"/>
-                    <path d="M32 20v24M20 32h24" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <p>No recent activity</p>
+                 <p style="color: var(--danger);">Failed to load activity</p>
             </div>
         `;
     }
@@ -377,12 +410,27 @@ function initializeSettings() {
 
     // Disconnect button
     document.getElementById('disconnect-btn').addEventListener('click', async () => {
-        if (confirm('Are you sure you want to disconnect WhatsApp?')) {
+        if (confirm('Are you sure you want to disconnect WhatsApp? This will log you out and you will need to scan the QR code again.')) {
+            const btn = document.getElementById('disconnect-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Disconnecting...';
+            btn.disabled = true;
+
             try {
-                // Call disconnect API
-                alert('Disconnect functionality not yet implemented');
+                const response = await fetch(`${API_BASE}/api/disconnect`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Disconnected successfully. The page will reload to show the new QR code.');
+                    window.location.reload();
+                } else {
+                    throw new Error(data.error || 'Disconnect failed');
+                }
             } catch (error) {
                 console.error('Disconnect failed:', error);
+                alert('Disconnect failed: ' + error.message);
+                btn.textContent = originalText;
+                btn.disabled = false;
             }
         }
     });
