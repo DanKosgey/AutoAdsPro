@@ -26,7 +26,7 @@ export class SessionManager {
     async acquireLock(): Promise<boolean> {
         try {
             const now = new Date();
-            const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+            const expiresAt = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutes
 
             // First, clean up any expired locks
             await db.delete(sessionLock)
@@ -122,7 +122,7 @@ export class SessionManager {
 
         this.lockRefreshInterval = setInterval(async () => {
             try {
-                const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+                const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
 
                 await db.update(sessionLock)
                     .set({ expiresAt })
@@ -135,7 +135,7 @@ export class SessionManager {
             } catch (error: any) {
                 console.error('Error refreshing session lock:', error.message);
             }
-        }, 2 * 60 * 1000); // Refresh every 2 minutes
+        }, 1 * 60 * 1000); // Refresh every 1 minute
     }
 
     /**
