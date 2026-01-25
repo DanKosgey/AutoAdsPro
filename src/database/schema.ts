@@ -67,3 +67,65 @@ export const conversations = pgTable('conversations', {
     endedAt: timestamp('ended_at'),
     unreadByOwner: boolean('unread_by_owner').default(true),
 });
+
+// 6. AI Profile: Agent Customization
+export const aiProfile = pgTable('ai_profile', {
+    id: serial('id').primaryKey(),
+
+    // Agent Identity
+    agentName: varchar('agent_name', { length: 100 }).default('Representative'),
+    agentRole: text('agent_role').default('Personal Assistant'),
+
+    // Personality & Behavior
+    personalityTraits: text('personality_traits').default('Professional, helpful, and efficient'),
+    communicationStyle: text('communication_style').default('Friendly yet professional'),
+
+    // Custom System Prompts
+    systemPrompt: text('system_prompt'), // Main system prompt override
+    greetingMessage: text('greeting_message'), // Custom greeting for new contacts
+
+    // Behavior Settings
+    responseLength: varchar('response_length', { length: 20 }).default('medium'), // short, medium, long
+    useEmojis: boolean('use_emojis').default(true),
+    formalityLevel: integer('formality_level').default(5), // 1-10 scale
+
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// 7. User Profile: Boss/Owner Information
+export const userProfile = pgTable('user_profile', {
+    id: serial('id').primaryKey(),
+
+    // Personal Information
+    fullName: varchar('full_name', { length: 100 }),
+    preferredName: varchar('preferred_name', { length: 50 }),
+    title: varchar('title', { length: 100 }), // CEO, Manager, etc.
+    company: varchar('company', { length: 200 }),
+
+    // Contact Information
+    email: varchar('email', { length: 255 }),
+    phone: varchar('phone', { length: 50 }),
+    location: varchar('location', { length: 200 }),
+    timezone: varchar('timezone', { length: 50 }),
+
+    // Professional Context
+    industry: varchar('industry', { length: 100 }),
+    role: text('role'), // Detailed role description
+    responsibilities: text('responsibilities'), // What they do
+
+    // Preferences
+    workingHours: text('working_hours'), // e.g., "9 AM - 5 PM EST"
+    availability: text('availability'), // When they're available
+    priorities: text('priorities'), // What matters most to them
+
+    // AI Context
+    backgroundInfo: text('background_info'), // Additional context for AI
+    communicationPreferences: text('communication_preferences'),
+
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+

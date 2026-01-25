@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -15,7 +17,9 @@
                 <div class="logo">
                     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                         <circle cx="20" cy="20" r="18" fill="url(#gradient)" />
-                        <path d="M20 10C14.48 10 10 14.48 10 20C10 21.82 10.5 23.52 11.36 25L10 30L15.18 28.66C16.6 29.44 18.25 29.9 20 29.9C25.52 29.9 30 25.42 30 19.9C30 14.38 25.52 10 20 10Z" fill="white"/>
+                        <path
+                            d="M20 10C14.48 10 10 14.48 10 20C10 21.82 10.5 23.52 11.36 25L10 30L15.18 28.66C16.6 29.44 18.25 29.9 20 29.9C25.52 29.9 30 25.42 30 19.9C30 14.38 25.52 10 20 10Z"
+                            fill="white" />
                         <defs>
                             <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
                                 <stop offset="0%" stop-color="#667eea" />
@@ -33,27 +37,48 @@
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="dashboard">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                        <path
+                            d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                     </svg>
                     <span>Dashboard</span>
                 </a>
                 <a href="#" class="nav-item" data-page="chats">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/>
-                        <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z"/>
+                        <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                        <path
+                            d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
                     </svg>
                     <span>Chats</span>
                     <span class="badge" id="chat-count">0</span>
                 </a>
                 <a href="#" class="nav-item" data-page="contacts">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                        <path
+                            d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
                     <span>Contacts</span>
                 </a>
+                <a href="#" class="nav-item" data-page="ai-profile">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13 7H7v6h6V7z" />
+                        <path fill-rule="evenodd"
+                            d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span>AI Profile</span>
+                </a>
+                <a href="#" class="nav-item" data-page="user-profile">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <span>My Profile</span>
+                </a>
                 <a href="#" class="nav-item" data-page="settings">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd"
+                            d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                            clip-rule="evenodd" />
                     </svg>
                     <span>Settings</span>
                 </a>
@@ -78,7 +103,9 @@
                     <h2>Dashboard</h2>
                     <button class="btn-refresh" id="refresh-btn">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                clip-rule="evenodd" />
                         </svg>
                     </button>
                 </header>
@@ -122,7 +149,8 @@
                     <div class="stat-card">
                         <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                <path
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                         </div>
                         <div class="stat-content">
@@ -135,7 +163,8 @@
                     <div class="stat-card">
                         <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                <path
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
                         <div class="stat-content">
@@ -148,7 +177,7 @@
                     <div class="stat-card">
                         <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="stat-content">
@@ -161,7 +190,7 @@
                     <div class="stat-card">
                         <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="stat-content">
@@ -178,8 +207,8 @@
                     <div class="activity-list" id="activity-list">
                         <div class="activity-empty">
                             <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                                <circle cx="32" cy="32" r="32" fill="#f3f4f6"/>
-                                <path d="M32 20v24M20 32h24" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="32" cy="32" r="32" fill="#f3f4f6" />
+                                <path d="M32 20v24M20 32h24" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" />
                             </svg>
                             <p>No recent activity</p>
                         </div>
@@ -193,7 +222,9 @@
                     <h2>Conversations</h2>
                     <div class="search-box">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                clip-rule="evenodd" />
                         </svg>
                         <input type="text" placeholder="Search conversations..." id="chat-search">
                     </div>
@@ -203,8 +234,8 @@
                     <div class="chat-list" id="chat-list">
                         <div class="chat-empty">
                             <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                                <circle cx="32" cy="32" r="32" fill="#f3f4f6"/>
-                                <path d="M20 28h24M20 36h16" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="32" cy="32" r="32" fill="#f3f4f6" />
+                                <path d="M20 28h24M20 36h16" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" />
                             </svg>
                             <p>No conversations yet</p>
                         </div>
@@ -212,8 +243,8 @@
                     <div class="chat-detail" id="chat-detail">
                         <div class="chat-detail-empty">
                             <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                                <circle cx="40" cy="40" r="40" fill="#f3f4f6"/>
-                                <path d="M30 35h20M30 45h14" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="40" cy="40" r="40" fill="#f3f4f6" />
+                                <path d="M30 35h20M30 45h14" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" />
                             </svg>
                             <h3>Select a conversation</h3>
                             <p>Choose a chat from the list to view messages</p>
@@ -228,7 +259,9 @@
                     <h2>Contacts</h2>
                     <div class="search-box">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                clip-rule="evenodd" />
                         </svg>
                         <input type="text" placeholder="Search contacts..." id="contact-search">
                     </div>
@@ -237,9 +270,10 @@
                 <div class="contacts-grid" id="contacts-grid">
                     <div class="contacts-empty">
                         <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                            <circle cx="32" cy="32" r="32" fill="#f3f4f6"/>
-                            <circle cx="32" cy="26" r="8" stroke="#9ca3af" stroke-width="2"/>
-                            <path d="M20 50c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="32" cy="32" r="32" fill="#f3f4f6" />
+                            <circle cx="32" cy="26" r="8" stroke="#9ca3af" stroke-width="2" />
+                            <path d="M20 50c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="#9ca3af" stroke-width="2"
+                                stroke-linecap="round" />
                         </svg>
                         <p>No contacts yet</p>
                     </div>
@@ -307,9 +341,180 @@
                     </div>
                 </div>
             </div>
+
+            <!-- AI Profile Page -->
+            <div class="page" id="ai-profile-page">
+                <header class="page-header">
+                    <h2>🤖 AI Agent Profile</h2>
+                    <button class="btn-primary" id="save-ai-profile">Save Changes</button>
+                </header>
+
+                <div class="profile-container">
+                    <div class="profile-section">
+                        <h3>Agent Identity</h3>
+                        <div class="form-group">
+                            <label>Agent Name</label>
+                            <input type="text" id="agent-name" placeholder="Representative">
+                            <small>The name your AI agent will use</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Agent Role</label>
+                            <input type="text" id="agent-role" placeholder="Personal Assistant">
+                            <small>What role does your agent play?</small>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Personality & Style</h3>
+                        <div class="form-group">
+                            <label>Personality Traits</label>
+                            <textarea id="personality-traits" rows="3"
+                                placeholder="Professional, helpful, and efficient"></textarea>
+                            <small>Describe how the AI should behave</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Communication Style</label>
+                            <textarea id="communication-style" rows="2"
+                                placeholder="Friendly yet professional"></textarea>
+                            <small>How should the AI communicate?</small>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Custom System Prompt</h3>
+                        <div class="form-group">
+                            <label>System Prompt Override (Advanced)</label>
+                            <textarea id="system-prompt" rows="6"
+                                placeholder="Leave empty to use default prompt..."></textarea>
+                            <small>⚠️ Advanced: Override the default AI instructions</small>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Behavior Settings</h3>
+                        <div class="form-group">
+                            <label>Response Length</label>
+                            <select id="response-length">
+                                <option value="short">Short & Concise</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="long">Detailed & Comprehensive</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Formality Level: <span id="formality-value">5</span>/10</label>
+                            <input type="range" id="formality-level" min="1" max="10" value="5">
+                            <div class="range-labels">
+                                <span>Casual</span>
+                                <span>Formal</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use-emojis" checked>
+                                <span>Use Emojis in Responses</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Profile Page -->
+            <div class="page" id="user-profile-page">
+                <header class="page-header">
+                    <h2>👤 Your Profile</h2>
+                    <button class="btn-primary" id="save-user-profile">Save Changes</button>
+                </header>
+
+                <div class="profile-container">
+                    <div class="profile-section">
+                        <h3>Personal Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="user-full-name" placeholder="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label>Preferred Name</label>
+                                <input type="text" id="user-preferred-name" placeholder="John">
+                                <small>How should the AI address you?</small>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Title/Position</label>
+                                <input type="text" id="user-title" placeholder="CEO">
+                            </div>
+                            <div class="form-group">
+                                <label>Company</label>
+                                <input type="text" id="user-company" placeholder="Acme Corp">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Contact Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="user-email" placeholder="john@acme.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="user-phone" placeholder="+1234567890">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" id="user-location" placeholder="New York, USA">
+                            </div>
+                            <div class="form-group">
+                                <label>Timezone</label>
+                                <input type="text" id="user-timezone" placeholder="EST">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Professional Context</h3>
+                        <div class="form-group">
+                            <label>Industry</label>
+                            <input type="text" id="user-industry" placeholder="Technology">
+                        </div>
+                        <div class="form-group">
+                            <label>Role Description</label>
+                            <textarea id="user-role" rows="3" placeholder="Describe what you do..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Key Responsibilities</label>
+                            <textarea id="user-responsibilities" rows="3"
+                                placeholder="What are your main responsibilities?"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h3>Availability & Preferences</h3>
+                        <div class="form-group">
+                            <label>Working Hours</label>
+                            <input type="text" id="user-working-hours" placeholder="9 AM - 5 PM EST">
+                        </div>
+                        <div class="form-group">
+                            <label>Priorities</label>
+                            <textarea id="user-priorities" rows="2" placeholder="What matters most to you?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Background Info (for AI context)</label>
+                            <textarea id="user-background" rows="4"
+                                placeholder="Any additional context that helps the AI understand you better..."></textarea>
+                            <small>This information helps the AI provide more personalized responses</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script src="/app.js"></script>
 </body>
+
 </html>

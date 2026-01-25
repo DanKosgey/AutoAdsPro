@@ -4,7 +4,7 @@ import path from 'path';
 import { config } from './config/env';
 import { WhatsAppClient } from './core/whatsapp';
 import { db, testConnection } from './database';
-import { contacts, messageLogs, authCredentials } from './database/schema';
+import { contacts, messageLogs, authCredentials, aiProfile, userProfile } from './database/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { sessionManager } from './services/sessionManager';
 
@@ -205,6 +205,208 @@ app.post('/api/settings', (req, res) => {
     // Placeholder for future settings updates (e.g. system prompt, auto-reply toggle)
     // Currently settings are handled via environment variables or client-side storage.
     res.json({ success: true, message: 'Settings endpoint is currently a placeholder.' });
+});
+
+// AI Profile Endpoints
+app.get('/api/ai-profile', async (req, res) => {
+    try {
+        const profile = await db.select().from(aiProfile).then(rows => rows[0]);
+
+        // If no profile exists, return defaults
+        if (!profile) {
+            return res.json({
+                id: null,
+                agentName: 'Representative',
+                agentRole: 'Personal Assistant',
+                personalityTraits: 'Professional, helpful, and efficient',
+                communicationStyle: 'Friendly yet professional',
+                systemPrompt: null,
+                greetingMessage: null,
+                responseLength: 'medium',
+                useEmojis: true,
+                formalityLevel: 5
+            });
+        }
+
+        res.json(profile);
+    } catch (error) {
+        console.error('Failed to fetch AI profile:', error);
+        res.status(500).json({ error: 'Failed to fetch AI profile' });
+    }
+});
+
+app.put('/api/ai-profile', async (req, res) => {
+    try {
+        const {
+            agentName,
+            agentRole,
+            personalityTraits,
+            communicationStyle,
+            systemPrompt,
+            greetingMessage,
+            responseLength,
+            useEmojis,
+            formalityLevel
+        } = req.body;
+
+        // Check if profile exists
+        const existing = await db.select().from(aiProfile).then(rows => rows[0]);
+
+        let result;
+        if (existing) {
+            // Update existing profile
+            result = await db.update(aiProfile)
+                .set({
+                    agentName,
+                    agentRole,
+                    personalityTraits,
+                    communicationStyle,
+                    systemPrompt,
+                    greetingMessage,
+                    responseLength,
+                    useEmojis,
+                    formalityLevel,
+                    updatedAt: new Date()
+                })
+                .where(eq(aiProfile.id, existing.id))
+                .returning();
+        } else {
+            // Create new profile
+            result = await db.insert(aiProfile)
+                .values({
+                    agentName,
+                    agentRole,
+                    personalityTraits,
+                    communicationStyle,
+                    systemPrompt,
+                    greetingMessage,
+                    responseLength,
+                    useEmojis,
+                    formalityLevel
+                })
+                .returning();
+        }
+
+        res.json({ success: true, profile: result[0] });
+    } catch (error) {
+        console.error('Failed to update AI profile:', error);
+        res.status(500).json({ error: 'Failed to update AI profile' });
+    }
+});
+
+// User Profile Endpoints
+app.get('/api/user-profile', async (req, res) => {
+    try {
+        const profile = await db.select().from(userProfile).then(rows => rows[0]);
+
+        // If no profile exists, return empty profile
+        if (!profile) {
+            return res.json({
+                id: null,
+                fullName: null,
+                preferredName: null,
+                title: null,
+                company: null,
+                email: null,
+                phone: null,
+                location: null,
+                timezone: null,
+                industry: null,
+                role: null,
+                responsibilities: null,
+                workingHours: null,
+                availability: null,
+                priorities: null,
+                backgroundInfo: null,
+                communicationPreferences: null
+            });
+        }
+
+        res.json(profile);
+    } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
+app.put('/api/user-profile', async (req, res) => {
+    try {
+        const {
+            fullName,
+            preferredName,
+            title,
+            company,
+            email,
+            phone,
+            location,
+            timezone,
+            industry,
+            role,
+            responsibilities,
+            workingHours,
+            availability,
+            priorities,
+            backgroundInfo,
+            communicationPreferences
+        } = req.body;
+
+        // Check if profile exists
+        const existing = await db.select().from(userProfile).then(rows => rows[0]);
+
+        let result;
+        if (existing) {
+            // Update existing profile
+            result = await db.update(userProfile)
+                .set({
+                    fullName,
+                    preferredName,
+                    title,
+                    company,
+                    email,
+                    phone,
+                    location,
+                    timezone,
+                    industry,
+                    role,
+                    responsibilities,
+                    workingHours,
+                    availability,
+                    priorities,
+                    backgroundInfo,
+                    communicationPreferences,
+                    updatedAt: new Date()
+                })
+                .where(eq(userProfile.id, existing.id))
+                .returning();
+        } else {
+            // Create new profile
+            result = await db.insert(userProfile)
+                .values({
+                    fullName,
+                    preferredName,
+                    title,
+                    company,
+                    email,
+                    phone,
+                    location,
+                    timezone,
+                    industry,
+                    role,
+                    responsibilities,
+                    workingHours,
+                    availability,
+                    priorities,
+                    backgroundInfo,
+                    communicationPreferences
+                })
+                .returning();
+        }
+
+        res.json({ success: true, profile: result[0] });
+    } catch (error) {
+        console.error('Failed to update user profile:', error);
+        res.status(500).json({ error: 'Failed to update user profile' });
+    }
 });
 
 const start = async () => {

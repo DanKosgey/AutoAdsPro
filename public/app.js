@@ -61,6 +61,12 @@ function loadPageData(page) {
         case 'contacts':
             loadContacts();
             break;
+        case 'ai-profile':
+            loadAIProfile();
+            break;
+        case 'user-profile':
+            loadUserProfile();
+            break;
         case 'settings':
             loadSettings();
             break;
@@ -526,3 +532,157 @@ function filterContacts(query) {
 // Export for global access
 window.switchPage = switchPage;
 window.selectChat = selectChat;
+
+// AI Profile Functions
+async function loadAIProfile() {
+    try {
+        const response = await fetch(`${API_BASE}/api/ai-profile`);
+        const profile = await response.json();
+
+        // Populate form fields
+        document.getElementById('agent-name').value = profile.agentName || '';
+        document.getElementById('agent-role').value = profile.agentRole || '';
+        document.getElementById('personality-traits').value = profile.personalityTraits || '';
+        document.getElementById('communication-style').value = profile.communicationStyle || '';
+        document.getElementById('system-prompt').value = profile.systemPrompt || '';
+        document.getElementById('response-length').value = profile.responseLength || 'medium';
+        document.getElementById('formality-level').value = profile.formalityLevel || 5;
+        document.getElementById('formality-value').textContent = profile.formalityLevel || 5;
+        document.getElementById('use-emojis').checked = profile.useEmojis !== false;
+
+        // Add formality slider listener
+        document.getElementById('formality-level').addEventListener('input', (e) => {
+            document.getElementById('formality-value').textContent = e.target.value;
+        });
+
+        // Add save button listener
+        document.getElementById('save-ai-profile').addEventListener('click', saveAIProfile);
+    } catch (error) {
+        console.error('Failed to load AI profile:', error);
+        alert('Failed to load AI profile');
+    }
+}
+
+async function saveAIProfile() {
+    const btn = document.getElementById('save-ai-profile');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    try {
+        const data = {
+            agentName: document.getElementById('agent-name').value,
+            agentRole: document.getElementById('agent-role').value,
+            personalityTraits: document.getElementById('personality-traits').value,
+            communicationStyle: document.getElementById('communication-style').value,
+            systemPrompt: document.getElementById('system-prompt').value || null,
+            responseLength: document.getElementById('response-length').value,
+            formalityLevel: parseInt(document.getElementById('formality-level').value),
+            useEmojis: document.getElementById('use-emojis').checked
+        };
+
+        const response = await fetch(`${API_BASE}/api/ai-profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            btn.textContent = 'Saved ✓';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }, 2000);
+            alert('AI Profile saved successfully! The changes will take effect in new conversations.');
+        } else {
+            throw new Error(result.error || 'Save failed');
+        }
+    } catch (error) {
+        console.error('Failed to save AI profile:', error);
+        alert('Failed to save AI profile: ' + error.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+// User Profile Functions
+async function loadUserProfile() {
+    try {
+        const response = await fetch(`${API_BASE}/api/user-profile`);
+        const profile = await response.json();
+
+        // Populate form fields
+        document.getElementById('user-full-name').value = profile.fullName || '';
+        document.getElementById('user-preferred-name').value = profile.preferredName || '';
+        document.getElementById('user-title').value = profile.title || '';
+        document.getElementById('user-company').value = profile.company || '';
+        document.getElementById('user-email').value = profile.email || '';
+        document.getElementById('user-phone').value = profile.phone || '';
+        document.getElementById('user-location').value = profile.location || '';
+        document.getElementById('user-timezone').value = profile.timezone || '';
+        document.getElementById('user-industry').value = profile.industry || '';
+        document.getElementById('user-role').value = profile.role || '';
+        document.getElementById('user-responsibilities').value = profile.responsibilities || '';
+        document.getElementById('user-working-hours').value = profile.workingHours || '';
+        document.getElementById('user-priorities').value = profile.priorities || '';
+        document.getElementById('user-background').value = profile.backgroundInfo || '';
+
+        // Add save button listener
+        document.getElementById('save-user-profile').addEventListener('click', saveUserProfile);
+    } catch (error) {
+        console.error('Failed to load user profile:', error);
+        alert('Failed to load user profile');
+    }
+}
+
+async function saveUserProfile() {
+    const btn = document.getElementById('save-user-profile');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    try {
+        const data = {
+            fullName: document.getElementById('user-full-name').value,
+            preferredName: document.getElementById('user-preferred-name').value,
+            title: document.getElementById('user-title').value,
+            company: document.getElementById('user-company').value,
+            email: document.getElementById('user-email').value,
+            phone: document.getElementById('user-phone').value,
+            location: document.getElementById('user-location').value,
+            timezone: document.getElementById('user-timezone').value,
+            industry: document.getElementById('user-industry').value,
+            role: document.getElementById('user-role').value,
+            responsibilities: document.getElementById('user-responsibilities').value,
+            workingHours: document.getElementById('user-working-hours').value,
+            priorities: document.getElementById('user-priorities').value,
+            backgroundInfo: document.getElementById('user-background').value
+        };
+
+        const response = await fetch(`${API_BASE}/api/user-profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            btn.textContent = 'Saved ✓';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }, 2000);
+            alert('Profile saved successfully! The AI will use this information to provide better responses.');
+        } else {
+            throw new Error(result.error || 'Save failed');
+        }
+    } catch (error) {
+        console.error('Failed to save user profile:', error);
+        alert('Failed to save user profile: ' + error.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
