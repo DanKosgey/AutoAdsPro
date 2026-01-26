@@ -2,7 +2,7 @@ import makeWASocket, { DisconnectReason, useMultiFileAuthState, WASocket } from 
 import { Boom } from '@hapi/boom';
 import { config } from '../config/env';
 import { db, withRetry } from '../database';
-import { contacts, messageLogs } from '../database/schema';
+import { contacts, messageLogs, aiProfile, userProfile } from '../database/schema';
 import { eq, desc } from 'drizzle-orm';
 import { geminiService } from '../services/ai/gemini';
 import { calculateHumanDelay, sleep } from '../utils/delay';
@@ -254,6 +254,7 @@ export class WhatsAppClient {
     }
 
     // Only process personal messages (ending with @s.whatsapp.net)
+    // NOTE: This includes WhatsApp Business accounts as they use the same suffix
     if (!remoteJid.endsWith('@s.whatsapp.net')) {
       console.log(`⏩ Skipping: Unknown JID format ${remoteJid}`);
       return;
@@ -402,11 +403,22 @@ export class WhatsAppClient {
       `⚠️ IMPORTANT: You are chatting with the OWNER (Boss). You have full access to all tools including summaries, system status, and analytics. Obey all commands.` :
       `Contact Name: ${contact.name || "Unknown"}\nSummary: ${contact.summary}\nTrust Level: ${contact.trustLevel}`;
 
+    // Fetch AI and User Profiles
+    const currentAiProfile = await withRetry(async () => {
+      return await db.select().from(aiProfile).limit(1).then(res => res[0]);
+    });
+
+    const currentUserProfile = await withRetry(async () => {
+      return await db.select().from(userProfile).limit(1).then(res => res[0]);
+    });
+
     let geminiResponse;
     try {
       geminiResponse = await geminiService.generateReply(
         history.concat(`Them: ${fullText}`),
         userRoleContext,
+        currentAiProfile,
+        currentUserProfile,
         systemPrompt
       );
     } catch (error: any) {
@@ -448,6 +460,8 @@ export class WhatsAppClient {
         geminiResponse = await geminiService.generateReply(
           history.concat(`Them: ${fullText}`, toolOutputText),
           userRoleContext,
+          currentAiProfile,
+          currentUserProfile,
           systemPrompt
         );
       } catch (error: any) {

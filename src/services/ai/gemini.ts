@@ -90,9 +90,64 @@ export class GeminiService {
     throw lasterror;
   }
 
-  async generateReply(history: string[], userContext: string, customPrompt?: string): Promise<{ type: 'text' | 'tool_call', content?: string, functionCall?: { name: string, args: any } }> {
+  async generateReply(
+    history: string[],
+    userContext: string,
+    aiProfile?: any,
+    userProfile?: any,
+    customPrompt?: string
+  ): Promise<{ type: 'text' | 'tool_call', content?: string, functionCall?: { name: string, args: any } }> {
     try {
-      const systemPrompt = customPrompt || SYSTEM_PROMPTS.REPRESENTATIVE(userContext);
+      let systemPrompt = customPrompt;
+
+      // 1. Construct System Prompt from AI Profile if not provided specifically (e.g. Identity prompt)
+      if (!systemPrompt) {
+        if (aiProfile) {
+          if (aiProfile.systemPrompt) {
+            // A. Use hardcoded override from DB
+            systemPrompt = aiProfile.systemPrompt;
+          } else {
+            // B. Construct from components
+            systemPrompt = `
+IDENTITY & ROLE:
+You are ${aiProfile.agentName || "the Representative"}, ${aiProfile.agentRole || "a personal assistant"}.
+Personality: ${aiProfile.personalityTraits || "Professional and helpful"}.
+Style: ${aiProfile.communicationStyle || "Friendly"}.
+Formality Level: ${aiProfile.formalityLevel || 5}/10.
+
+CORE INSTRUCTIONS:
+${aiProfile.agentRole === 'Discipline Guardian' ?
+                // Special handling for the Discipline Guardian to ensure it's strict
+                "You are a strict but supportive mentor. Your goal is to help the user conserve energy and maintain discipline. Do not be a sycophant. Call them out on weakness, but encourage their strength." :
+                "You manage communications autonomously. Be helpful but protective of the owner's time."
+              }
+
+CONTEXT ABOUT THIS CONTACT:
+${userContext}
+`;
+            if (aiProfile.greetingMessage) {
+              systemPrompt += `\nPreferred Greeting: "${aiProfile.greetingMessage}"`;
+            }
+          }
+        } else {
+          // C. Default Fallback
+          systemPrompt = SYSTEM_PROMPTS.REPRESENTATIVE(userContext);
+        }
+      }
+
+      // 2. Inject Owner/Boss Profile (The "Knowledge Base" about the Boss)
+      if (userProfile) {
+        const bossContext = `
+**Information about the Boss (Your User):**
+Name: ${userProfile.fullName || userProfile.preferredName || "The Boss"}
+Title/Role: ${userProfile.title || "Owner"} at ${userProfile.company || "N/A"}
+Priorities: ${userProfile.priorities || "Not specified"}
+Availability: ${userProfile.availability || "Not specified"}
+Background: ${userProfile.backgroundInfo || "N/A"}
+Communication Prefs: ${userProfile.communicationPreferences || "N/A"}
+`;
+        systemPrompt += `\n${bossContext}`;
+      }
 
       const prompt = `${systemPrompt}
       
