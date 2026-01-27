@@ -45,10 +45,10 @@ export class ConversationManager {
 
     /**
      * Triggered when silence is detected (20 mins) or manually closed.
-     * Generates the "Smart Snitch" report.
+     * Queues the "Smart Snitch" report for async generation.
      */
     async endConversation(contactPhone: string) {
-        console.log(`🛑 Conversation ended for ${contactPhone} (Timeout/Closed). Generating Report...`);
+        console.log(`🛑 Conversation ended for ${contactPhone} (Timeout/Closed). Queueing Report...`);
 
         // Remove timer
         this.activeTimers.delete(contactPhone);
@@ -65,37 +65,28 @@ export class ConversationManager {
             .set({ status: 'completed', endedAt: new Date() })
             .where(eq(conversations.id, activeConv.id));
 
-        // 3. Get Chat History for this session
-        // We grab messages since the conversation started
-        const historyLogs = await db.select()
-            .from(messageLogs)
-            .where(eq(messageLogs.contactPhone, contactPhone))
-            .orderBy(desc(messageLogs.createdAt))
-            .limit(50); // Analyze last 50 messages max
-
-        const history = historyLogs.reverse().map(m => `${m.role === 'agent' ? 'Me' : 'Them'}: ${m.content}`);
-
-        // 4. Get Contact Info
+        // 3. Get Contact Info
         const contact = await db.select().from(contacts)
             .where(eq(contacts.phone, contactPhone))
             .then(res => res[0]);
 
-        // 5. Generate Report using Gemini
-        const report = await geminiService.generateReport(history, contact.confirmedName || contact.originalPushname || "Unknown");
+        // 4. Get last message time
+        const lastMessage = await db.select()
+            .from(messageLogs)
+            .where(eq(messageLogs.contactPhone, contactPhone))
+            .orderBy(desc(messageLogs.createdAt))
+            .limit(1)
+            .then(res => res[0]);
 
-        // 6. Send Report to Owner (Smart Snitch)
-        if (config.ownerPhone) {
-            const ownerJid = config.ownerPhone.includes('@s.whatsapp.net') ? config.ownerPhone : config.ownerPhone + '@s.whatsapp.net';
+        // 5. Queue report for async generation (don't block here!)
+        const { reportQueueService } = await import('./reportQueueService');
+        await reportQueueService.enqueue(
+            contactPhone,
+            activeConv.id,
+            contact?.confirmedName || contact?.originalPushname || 'Unknown',
+            lastMessage?.createdAt || undefined
+        );
 
-            console.log(`📝 Sending Smart Snitch Report for ${contactPhone} to Owner (${ownerJid})...`);
-            await this.messageSender.sendText(ownerJid, report);
-
-            // Save report to DB
-            await db.update(conversations)
-                .set({ summary: report })
-                .where(eq(conversations.id, activeConv.id));
-        } else {
-            console.log('⚠️ Owner phone not set! Cannot send report.');
-        }
+        console.log(`📋 Queued conversation report for ${contactPhone}. Will generate when API keys are available.`);
     }
 }

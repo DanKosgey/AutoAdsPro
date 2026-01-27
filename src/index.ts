@@ -427,6 +427,11 @@ const start = async () => {
             // or let the server stay up for diagnostics
         });
 
+        // 3. Start Background Worker for Queue Processing
+        console.log('🔄 Starting Background Worker for queue processing...');
+        const { backgroundWorker } = await import('./services/backgroundWorker');
+        backgroundWorker.start();
+
         console.log('✨ System Operational. Waiting for messages...');
 
         // Graceful Shutdown
@@ -434,7 +439,11 @@ const start = async () => {
             console.log(`🛑 Received ${signal}. Shutting down gracefully...`);
 
             try {
-                // Stop server first
+                // Stop background worker first
+                const { backgroundWorker } = await import('./services/backgroundWorker');
+                backgroundWorker.stop();
+
+                // Stop server
                 server.close();
 
                 // Give pending operations a moment to complete

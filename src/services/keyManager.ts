@@ -100,6 +100,13 @@ export class KeyManager {
     isPoolExhausted(): boolean {
         return this.getAvailableCount() === 0;
     }
+
+    /**
+     * Check if there's at least one available key
+     */
+    hasAvailableKey(): boolean {
+        return this.getAvailableCount() > 0;
+    }
     /**
      * Get the currently active key (or last used)
      */

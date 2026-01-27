@@ -164,3 +164,22 @@ export const queueMetrics = pgTable('queue_metrics', {
     };
 });
 
+// 10. Report Queue: Async conversation report generation
+export const reportQueue = pgTable('report_queue', {
+    id: serial('id').primaryKey(),
+    contactPhone: varchar('contact_phone', { length: 50 }).notNull(),
+    contactName: text('contact_name'),
+    conversationId: integer('conversation_id').references(() => conversations.id),
+    status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending' | 'processing' | 'completed' | 'failed'
+    retryCount: integer('retry_count').default(0),
+    lastAttempt: timestamp('last_attempt'),
+    lastMessageTime: timestamp('last_message_time'), // When user last messaged
+    error: text('error'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+    return {
+        statusIdx: index('report_queue_status_idx').on(table.status),
+    };
+});
+

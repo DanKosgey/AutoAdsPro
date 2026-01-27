@@ -510,13 +510,11 @@ export class WhatsAppClient {
         systemPrompt
       );
     } catch (error: any) {
-      if ((error.status === 429 || error.code === 429 || error.message === 'ALL_KEYS_EXHAUSTED') && !isOwner) {
-        console.log(`⏸️ Rate limit hit (or keys exhausted). Queueing batch.`);
-        const retryAfter = error.errorDetails?.find((d: any) => d['@type']?.includes('RetryInfo'))?.retryDelay;
-        const seconds = retryAfter ? parseInt(retryAfter) : 60;
-        rateLimitManager.setRateLimited(seconds);
-        rateLimitManager.enqueue(remoteJid, messages);
-        setTimeout(() => rateLimitManager.processQueue(this.processMessageBatch.bind(this)), seconds * 1000);
+      if ((error.status === 429 || error.code === 429 || error.message === 'ALL_KEYS_EXHAUSTED')) {
+        // Queue message for later processing
+        const { messageQueueService } = await import('../services/messageQueueService');
+        await messageQueueService.enqueue(remoteJid, messages, isOwner ? 'owner' : 'normal');
+        console.log(`⏸️ Rate limit hit. Queued ${messages.length} messages for ${remoteJid}. BackgroundWorker will retry.`);
         return;
       }
       console.error('Gemini Error:', error.message || error);

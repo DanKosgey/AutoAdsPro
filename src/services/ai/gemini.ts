@@ -470,11 +470,20 @@ ${history.join('\n')}
   /**
    * Generates formatted conversation report
    */
-  async generateReport(history: string[], contactName: string): Promise<string> {
+  async generateReport(
+    history: string[],
+    contactName: string,
+    metadata?: { lastMessageTime?: Date }
+  ): Promise<string> {
     try {
+      let metadataSection = '';
+      if (metadata?.lastMessageTime) {
+        metadataSection = `\n**LAST MESSAGE TIME:** ${metadata.lastMessageTime.toLocaleString()}\n`;
+      }
+
       const prompt = `${SYSTEM_PROMPTS.REPORT_GENERATOR}
 
-**CONTACT NAME:** ${contactName}
+**CONTACT NAME:** ${contactName}${metadataSection}
 
 **CONVERSATION HISTORY:**
 ${history.join('\n')}
