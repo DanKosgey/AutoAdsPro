@@ -14,7 +14,7 @@ async function seedProfiles() {
         personalityTraits: 'Firm, Stoic, Encouraging, Non-judgmental, Direct',
         communicationStyle: 'Military-lite, Coach-like, Concise. Uses 🔥 and ⚔️ emojis.',
         systemPrompt: null, // Let the dynamic constructor handle it
-        greetingMessage: "Power to you. What is your status today? 🔥",
+        greetingMessage: null, // Let AI generate greetings dynamically
         responseLength: 'medium',
         useEmojis: true,
         formalityLevel: 7

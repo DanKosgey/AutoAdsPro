@@ -244,6 +244,7 @@ export class GeminiService {
    */
   private _buildSystemPrompt(
     userContext: string,
+    isOwner: boolean,
     aiProfile?: AIProfile,
     userProfile?: UserProfile,
     customPrompt?: string
@@ -262,9 +263,11 @@ export class GeminiService {
     else if (aiProfile) {
       systemPrompt = this._constructProfilePrompt(aiProfile, userContext);
     }
-    // Priority 4: Default fallback
+    // Priority 4: Default fallback with Persona Switch
     else {
-      systemPrompt = SYSTEM_PROMPTS.REPRESENTATIVE(userContext);
+      systemPrompt = isOwner
+        ? SYSTEM_PROMPTS.OWNER(userContext)
+        : SYSTEM_PROMPTS.REPRESENTATIVE(userContext);
     }
 
     // Append user/boss profile information
@@ -374,6 +377,7 @@ ${history.join('\n')}
   async generateReply(
     history: string[],
     userContext: string,
+    isOwner: boolean,
     aiProfile?: AIProfile,
     userProfile?: UserProfile,
     customPrompt?: string
@@ -381,6 +385,7 @@ ${history.join('\n')}
     try {
       const systemPrompt = this._buildSystemPrompt(
         userContext,
+        isOwner,
         aiProfile,
         userProfile,
         customPrompt

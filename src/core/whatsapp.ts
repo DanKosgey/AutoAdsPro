@@ -503,6 +503,7 @@ export class WhatsAppClient {
       geminiResponse = await geminiService.generateReply(
         history.concat(`Them: ${fullText}`),
         userRoleContext,
+        isOwner,
         sanitizeProfile(currentAiProfile),
         sanitizeProfile(currentUserProfile),
         systemPrompt
@@ -548,6 +549,7 @@ export class WhatsAppClient {
         geminiResponse = await geminiService.generateReply(
           history.concat(`Them: ${fullText}`, toolOutputText),
           userRoleContext,
+          isOwner,
           sanitizeProfile(currentAiProfile),
           sanitizeProfile(currentUserProfile),
           systemPrompt
