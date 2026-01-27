@@ -19,6 +19,7 @@ import { notificationService } from '../services/notificationService';
 import { sessionManager } from '../services/sessionManager';
 import { messageQueueService } from '../services/queue/messageQueue';
 import { WorkerPool } from '../services/queue/workerPool';
+import { schedulerService } from '../services/scheduler';
 import { ConcurrencyController } from '../services/queue/concurrencyController';
 
 export class WhatsAppClient {
@@ -257,6 +258,10 @@ export class WhatsAppClient {
         if (this.sock) {
           notificationService.init(this.sock);
         }
+
+        // Initialize Scheduler Service
+        // This starts the cron jobs for morning motivation and evening summaries
+        schedulerService.init(this);
 
         // Set presence to "available" (online)
         await this.messageSender.setOnline();
@@ -610,6 +615,20 @@ export class WhatsAppClient {
     // Profiling (Skip for owner or if rate limited)
     if (!ownerService.isOwner(remoteJid) && !rateLimitManager.isLimited()) {
       this.runProfiling(history.concat(`Them: ${userText}`, `Me: ${finalResponse}`), contact);
+    }
+  }
+
+  /**
+   * Public method to send a text message to any JID.
+   * Useful for scheduled tasks and external triggers.
+   */
+  public async sendText(jid: string, text: string): Promise<void> {
+    if (this.messageSender) {
+      await this.messageSender.sendText(jid, text);
+    } else if (this.sock) {
+      await this.sock.sendMessage(jid, { text });
+    } else {
+      console.warn('⚠️ Cannot send message: Client not initialized');
     }
   }
 

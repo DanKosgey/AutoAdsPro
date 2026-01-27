@@ -99,43 +99,59 @@ export class MessageQueue {
         if (!this.persistenceEnabled) return null;
 
         try {
-            // Find the highest priority pending message
-            const messages = await withRetry(async () => {
-                return await db.select()
-                    .from(messageQueue)
-                    .where(eq(messageQueue.status, 'pending'))
-                    .orderBy(asc(messageQueue.priority), asc(messageQueue.createdAt))
-                    .limit(1);
-            });
+            // Attempt to dequeue multiple times to handle race conditions
+            for (let i = 0; i < 3; i++) {
+                // 1. Find the highest priority pending message
+                const candidates = await withRetry(async () => {
+                    return await db.select({ id: messageQueue.id })
+                        .from(messageQueue)
+                        .where(eq(messageQueue.status, 'pending'))
+                        .orderBy(asc(messageQueue.priority), asc(messageQueue.createdAt))
+                        .limit(1);
+                });
 
-            if (messages.length === 0) {
-                return null;
+                if (candidates.length === 0) {
+                    return null;
+                }
+
+                const candidateId = candidates[0].id;
+
+                // 2. Try to lock it (Optimistic Locking)
+                const result = await withRetry(async () => {
+                    return await db.update(messageQueue)
+                        .set({
+                            status: 'processing',
+                            workerId
+                        })
+                        .where(and(
+                            eq(messageQueue.id, candidateId),
+                            eq(messageQueue.status, 'pending') // Critical: Ensure it's still pending
+                        ))
+                        .returning();
+                });
+
+                // If we successfully locked the row (result has data), return it
+                if (result.length > 0) {
+                    const message = result[0];
+                    console.log(`📤 Dequeued message ${message.id} for ${message.jid} (Worker: ${workerId})`);
+
+                    return {
+                        id: message.id,
+                        jid: message.jid,
+                        messages: message.messageData as string[],
+                        priority: message.priority as Priority,
+                        status: 'processing',
+                        retryCount: message.retryCount,
+                        workerId,
+                        createdAt: message.createdAt || undefined,
+                    };
+                }
+
+                // If result is empty, another worker beat us to it. 
+                // Loop again to get the next message.
             }
 
-            const message = messages[0];
-
-            // Mark as processing
-            await withRetry(async () => {
-                await db.update(messageQueue)
-                    .set({
-                        status: 'processing',
-                        workerId
-                    })
-                    .where(eq(messageQueue.id, message.id));
-            });
-
-            console.log(`📤 Dequeued message ${message.id} for ${message.jid} (Worker: ${workerId})`);
-
-            return {
-                id: message.id,
-                jid: message.jid,
-                messages: message.messageData as string[],
-                priority: message.priority as Priority,
-                status: 'processing',
-                retryCount: message.retryCount,
-                workerId,
-                createdAt: message.createdAt || undefined,
-            };
+            return null; // Could not lock a message after retries
         } catch (error) {
             console.error('Error dequeuing message:', error);
             return null;

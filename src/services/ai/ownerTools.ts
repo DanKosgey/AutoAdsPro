@@ -99,6 +99,7 @@ export async function searchConversations(query: string, limit: number = 10): Pr
  */
 export async function getRecentConversations(limit: number = 10): Promise<string> {
     // Get latest message from each contact
+    // Note: We order by the subquery directly to avoid alias scope issues in some SQL dialects/drivers
     const recentContacts = await db.select({
         phone: contacts.phone,
         name: contacts.name,
@@ -116,7 +117,12 @@ export async function getRecentConversations(limit: number = 10): Promise<string
         )`
     })
         .from(contacts)
-        .orderBy(sql`last_message_time DESC`)
+        .orderBy(desc(sql`(
+            SELECT ${messageLogs.createdAt} FROM ${messageLogs}
+            WHERE ${messageLogs.contactPhone} = ${contacts.phone}
+            ORDER BY ${messageLogs.createdAt} DESC
+            LIMIT 1
+        )`))
         .limit(limit);
 
     if (recentContacts.length === 0) {
@@ -124,10 +130,19 @@ export async function getRecentConversations(limit: number = 10): Promise<string
     }
 
     let output = `💬 Recent Conversations:\n\n`;
+    let found = false;
+
     for (const contact of recentContacts) {
+        if (!contact.lastMessageTime) continue;
+
+        found = true;
         const timeAgo = getTimeAgo(contact.lastMessageTime);
         output += `• ${contact.name || 'Unknown'} (${timeAgo})\n`;
         output += `  "${(contact.lastMessage || '').substring(0, 60)}..."\n\n`;
+    }
+
+    if (!found) {
+        return "No recent conversations found.";
     }
 
     return output;
