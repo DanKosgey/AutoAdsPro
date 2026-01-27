@@ -15,12 +15,67 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeSettings();
     startStatusPolling();
     checkNotificationPermission();
+    initializeTheme(); // Add this
 });
+
+// Theme Logic
+// Theme Logic
+function initializeTheme() {
+    // Select all theme toggles (desktop and mobile)
+    const toggleBtns = document.querySelectorAll('.theme-toggle');
+
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('theme');
+
+    // Default to dark if no save, or follow save
+    let currentTheme = savedTheme || 'dark';
+
+    // Apply initial
+    applyTheme(currentTheme);
+
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(currentTheme);
+            localStorage.setItem('theme', currentTheme);
+        });
+    });
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Update icons for ALL buttons
+        toggleBtns.forEach(btn => {
+            const sunIcon = btn.querySelector('.sun-icon');
+            const moonIcon = btn.querySelector('.moon-icon');
+            if (sunIcon && moonIcon) {
+                if (theme === 'light') {
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                } else {
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                }
+            }
+        });
+    }
+}
 
 // Navigation
 function initializeNavigation() {
+    // Desktop Sidebar
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = item.dataset.page;
+            switchPage(page);
+        });
+    });
+
+    // Mobile Bottom Nav
+    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+    mobileNavItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const page = item.dataset.page;
@@ -30,8 +85,16 @@ function initializeNavigation() {
 }
 
 function switchPage(page) {
-    // Update nav
+    // Update nav (Desktop)
     document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.page === page) {
+            item.classList.add('active');
+        }
+    });
+
+    // Update nav (Mobile)
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
         item.classList.remove('active');
         if (item.dataset.page === page) {
             item.classList.add('active');
@@ -325,6 +388,37 @@ async function selectChat(phone) {
                 </div>
             </div>
         `;
+
+        // Mobile specific: Show detail view
+        if (window.innerWidth <= 768) {
+            chatDetail.classList.add('active');
+
+            // Add back button for mobile
+            const header = chatDetail.querySelector('.chat-messages-header');
+            if (header && !header.querySelector('.mobile-back-btn')) {
+                const backBtn = document.createElement('button');
+                backBtn.className = 'mobile-back-btn';
+                backBtn.innerHTML = `
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                `;
+                backBtn.style.background = 'transparent';
+                backBtn.style.border = 'none';
+                backBtn.style.color = 'white';
+                backBtn.style.marginRight = '1rem';
+                backBtn.style.cursor = 'pointer';
+                backBtn.style.display = 'flex';
+                backBtn.style.padding = '0';
+
+                backBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    chatDetail.classList.remove('active');
+                };
+
+                header.insertBefore(backBtn, header.firstChild);
+            }
+        }
     } catch (error) {
         console.error('Failed to load chat:', error);
         chatDetail.innerHTML = `
@@ -686,3 +780,92 @@ async function saveUserProfile() {
         btn.disabled = false;
     }
 }
+
+// Toast Notification System
+function showToast(message, type = 'info', title = null) {
+    const container = document.getElementById('toast-container');
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    // Icon based on type
+    let icon = '';
+    switch (type) {
+        case 'success': icon = '✓'; break;
+        case 'error': icon = '✕'; break;
+        case 'info': icon = 'ℹ'; break;
+        default: icon = '•';
+    }
+
+    // Title defaults
+    if (!title) {
+        switch (type) {
+            case 'success': title = 'Success'; break;
+            case 'error': title = 'Error'; break;
+            case 'info': title = 'Info'; break;
+        }
+    }
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    // Sound effect (optional, subtle)
+    if (localStorage.getItem('sound-alerts') === 'true') {
+        // const audio = new Audio('/notification.mp3'); 
+        // audio.volume = 0.2;
+        // audio.play().catch(() => {});
+    }
+
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 400);
+    }, 4000);
+}
+
+// Override native alert
+window.alert = (msg) => {
+    // Determine type based on msg content simplistic check
+    if (msg && (typeof msg === 'string')) {
+        if (msg.toLowerCase().includes('success') || msg.toLowerCase().includes('saved')) {
+            showToast(msg, 'success');
+        } else if (msg.toLowerCase().includes('failed') || msg.toLowerCase().includes('error')) {
+            showToast(msg, 'error');
+        } else {
+            showToast(msg, 'info');
+        }
+    } else {
+        showToast(String(msg), 'info');
+    }
+};
+
+// Auto-scroll function
+function scrollToBottom(element) {
+    if (element) {
+        element.scrollTop = element.scrollHeight;
+    }
+}
+
+// Hook into chat rendering to auto-scroll
+const originalSelectChat = window.selectChat;
+window.selectChat = async function (phone) {
+    if (originalSelectChat) await originalSelectChat(phone);
+    const container = document.querySelector('.chat-messages-list');
+    scrollToBottom(container);
+};
+
