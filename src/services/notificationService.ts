@@ -47,38 +47,11 @@ export class NotificationService {
     }
 
     /**
-     * Send Smart Snitch Report (when someone new messages)
+     * Send conversation summary (only notification type)
+     * This is called after 20 minutes of conversation inactivity
      */
-    async sendSnitchReport(contactJid: string, contactName: string, message: string): Promise<void> {
-        const report = `📝 Smart Snitch Report\n\n` +
-            `👤 Contact: ${contactName}\n` +
-            `📞 Number: ${formatPhoneNumber(contactJid)}\n` +
-            `💬 Message: "${message}"\n\n` +
-            `Reply to this message to respond to them.`;
-
-        await this.notifyOwner(report);
-    }
-
-    /**
-     * Send urgent message alert
-     */
-    async sendUrgentAlert(contactName: string, message: string): Promise<void> {
-        const alert = `🚨 URGENT MESSAGE\n\n` +
-            `From: ${contactName}\n` +
-            `Message: "${message}"`;
-
-        await this.notifyOwner(alert);
-    }
-
-    /**
-     * Send new contact notification
-     */
-    async sendNewContactAlert(contactName: string, contactJid: string): Promise<void> {
-        const alert = `✨ New Contact\n\n` +
-            `Name: ${contactName}\n` +
-            `Number: ${formatPhoneNumber(contactJid)}`;
-
-        await this.notifyOwner(alert);
+    async sendConversationSummary(summary: string): Promise<void> {
+        await this.notifyOwner(summary);
     }
 }
 

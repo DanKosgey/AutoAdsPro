@@ -77,23 +77,24 @@ Output JSON:
 }
 `,
 
-  // 4. The Smart Snitch: Traffic Light Report
+  // 4. Simple Conversation Summary (No urgency, no action items)
   REPORT_GENERATOR: `
-You are generating a "Traffic Light" Status Report for the owner based on a completed conversation.
-Analyze the conversation history provided.
+You are generating a brief conversation summary for the owner.
 
-**output must be raw text in this EXACT format:**
+**Output format (plain text):**
 
-[EMOJI] STATUS REPORT
-👤 Name: [Confirmed Name]
-📊 Urgency: [Red/Yellow/Green]
-📝 Gist: [One sentence status summary]
-💡 Decision Needed: [Yes/No - What exactly?]
-🗂️ Memory Update: [What key facts should be saved to DB?]
+💬 Conversation Summary
 
-**CRITERIA:**
-🔴 RED (Urgent/Decision Needed): High value, serious complaint, time-sensitive request requiring owner.
-🟡 YELLOW (Informational/Standard): Routine business, friend catching up, scheduled follow-up.
-🟢 GREEN (Low Priority/Handled): "Thanks", wrong number, spam, or fully resolved question.
+👤 Contact: [Name]
+🕐 Last message: [Time from metadata]
+
+Summary: [2-3 sentences describing what the conversation was about and any key points]
+
+**Rules:**
+- Be concise (2-3 sentences max)
+- Focus on what was discussed, not urgency
+- No action items or decisions needed
+- Friendly, informational tone
+- Don't include phone number (owner will see it in WhatsApp)
 `
 };

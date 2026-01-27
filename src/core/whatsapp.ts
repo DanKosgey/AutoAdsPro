@@ -416,18 +416,8 @@ export class WhatsAppClient {
     });
     if (!contact) return;
 
-    // --- SNITCH REPORT (New Contact Alert) ---
-    // If trust level is 0 and they've sent > 1 message (this batch), notify owner
-    if (!isOwner && contact.trustLevel === 0 && !contact.isVerified) {
-      // Prevent spamming reports - only if summary indicates it's fresh
-      if (contact.summary?.includes('New contact')) {
-        await notificationService.sendSnitchReport(remoteJid, contact.name || 'Unknown', fullText);
-        // Update summary so we don't snitch again immediately
-        await withRetry(async () => {
-          await db.update(contacts).set({ summary: 'New contact. Owner notified.' }).where(eq(contacts.phone, remoteJid));
-        });
-      }
-    }
+    // Note: Conversation summaries will be sent after 20 min of inactivity via reportQueueService
+
 
     // 3. Identity Validation Logic (Skip for owner)
     let systemPrompt: string | undefined = undefined;
