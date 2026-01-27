@@ -2,7 +2,7 @@ import makeWASocket, { DisconnectReason, useMultiFileAuthState, WASocket } from 
 import { Boom } from '@hapi/boom';
 import { config } from '../config/env';
 import { db, withRetry } from '../database';
-import { contacts, messageLogs, aiProfile, userProfile } from '../database/schema';
+import { contacts, messageLogs, aiProfile, userProfile, authCredentials } from '../database/schema';
 import { eq, desc } from 'drizzle-orm';
 import { geminiService } from '../services/ai/gemini';
 import { calculateHumanDelay, sleep } from '../utils/delay';
@@ -164,6 +164,18 @@ export class WhatsAppClient {
           console.log('❌ Session data is corrupted or invalid (405 error).');
           console.log('💡 Solution: Run "npx ts-node scripts/clear-auth.ts" to clear session and generate a new QR code.');
           await sessionManager.releaseLock();
+          process.exit(1);
+          return;
+        }
+
+        // Handle 401 (logged out)
+        if (error === 401 || error === DisconnectReason.loggedOut) {
+          console.log('❌ Session logged out or invalid (401).');
+          console.log('💡 Clearing auth credentials to allow re-scan...');
+          // Import authCredentials in the file header first, but assuming it is available or I will fix the import
+          await db.delete(authCredentials);
+          await sessionManager.releaseLock();
+          console.log('✅ Credentials cleared. Exiting to restart...');
           process.exit(1);
           return;
         }
