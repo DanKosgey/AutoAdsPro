@@ -27,8 +27,8 @@ function initializeTheme() {
     // Check saved theme or system preference
     const savedTheme = localStorage.getItem('theme');
 
-    // Default to dark if no save, or follow save
-    let currentTheme = savedTheme || 'dark';
+    // Default to light if no save, or follow save
+    let currentTheme = savedTheme || 'light';
 
     // Apply initial
     applyTheme(currentTheme);

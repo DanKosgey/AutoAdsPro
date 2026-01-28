@@ -303,23 +303,46 @@
             <!-- Settings Page -->
             <div class="page" id="settings-page">
                 <header class="page-header">
-                    <h2>Settings</h2>
+                    <h2>⚙️ Settings</h2>
                 </header>
 
                 <div class="settings-container">
-                    <!-- Appearance (Mobile Visible) -->
+                    <!-- Appearance Section -->
                     <div class="settings-section">
-                        <h3>Appearance</h3>
-                        <div class="form-group"
-                            style="display: flex; justify-content: space-between; align-items: center;">
-                            <label style="font-weight: 500; font-size: 1rem;">Theme Preference</label>
-                            <button id="mobile-theme-toggle" class="theme-toggle" aria-label="Toggle Theme"
-                                style="background: rgba(255,255,255,0.1); width: 44px; height: 44px;">
-                                <svg class="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <div class="settings-section-header">
+                            <div class="settings-icon"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path
+                                        d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Appearance</h3>
+                                <p>Customize how the app looks</p>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z" />
+                                    </svg>
+                                    <div>
+                                        <label>Theme Mode</label>
+                                        <p>Switch between light and dark theme</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="mobile-theme-toggle" class="theme-toggle-btn">
+                                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                     <path
                                         d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
                                 </svg>
-                                <svg class="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"
+                                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
                                     style="display: none;">
                                     <path
                                         d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,18.55,13.59,21.5,9,21.5 c-5.52,0-10-4.48-10-10C-1,6.91,1.95,3.05,5.51,1.51C5.51,1.51,5.51,1.51,5.51,1.51C5.63,2.71,6.95,4.04,9.37,5.51z M17,2 c0,1.94,2.16,3,1.35,5.17C20.84,5.84,23,3.94,23,2C23,2,17,2,17,2z" />
@@ -328,40 +351,106 @@
                         </div>
                     </div>
 
+                    <!-- Connection Section -->
                     <div class="settings-section">
-                        <h3>Connection</h3>
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <label>WhatsApp Status</label>
-                                <p>Current connection status</p>
+                        <div class="settings-section-header">
+                            <div class="settings-icon"
+                                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path
+                                        d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z" />
+                                </svg>
                             </div>
-                            <span class="setting-value" id="settings-status">Checking...</span>
+                            <div>
+                                <h3>Connection</h3>
+                                <p>WhatsApp connection details</p>
+                            </div>
                         </div>
+
                         <div class="setting-item">
                             <div class="setting-info">
-                                <label>Phone Number</label>
-                                <p>Connected WhatsApp number</p>
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                    </svg>
+                                    <div>
+                                        <label>WhatsApp Status</label>
+                                        <p>Current connection status</p>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="setting-value" id="settings-phone">Not connected</span>
+                            <span class="setting-badge" id="settings-status">Checking...</span>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                                    </svg>
+                                    <div>
+                                        <label>Phone Number</label>
+                                        <p>Connected WhatsApp number</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="setting-badge" id="settings-phone">Not connected</span>
                         </div>
                     </div>
 
+                    <!-- Notifications Section -->
                     <div class="settings-section">
-                        <h3>Notifications</h3>
+                        <div class="settings-section-header">
+                            <div class="settings-icon"
+                                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path
+                                        d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Notifications</h3>
+                                <p>Manage notification preferences</p>
+                            </div>
+                        </div>
+
                         <div class="setting-item">
                             <div class="setting-info">
-                                <label>Desktop Notifications</label>
-                                <p>Get notified of new messages</p>
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z" />
+                                    </svg>
+                                    <div>
+                                        <label>Desktop Notifications</label>
+                                        <p>Get notified of new messages</p>
+                                    </div>
+                                </div>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="desktop-notifications">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
+
                         <div class="setting-item">
                             <div class="setting-info">
-                                <label>Sound Alerts</label>
-                                <p>Play sound for new messages</p>
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                                    </svg>
+                                    <div>
+                                        <label>Sound Alerts</label>
+                                        <p>Play sound for new messages</p>
+                                    </div>
+                                </div>
                             </div>
                             <label class="toggle">
                                 <input type="checkbox" id="sound-alerts">
@@ -370,14 +459,42 @@
                         </div>
                     </div>
 
-                    <div class="settings-section">
-                        <h3>Danger Zone</h3>
+                    <!-- Danger Zone Section -->
+                    <div class="settings-section danger-section">
+                        <div class="settings-section-header">
+                            <div class="settings-icon"
+                                style="background: linear-gradient(135deg, #f43f5e 0%, #dc2626 100%);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Danger Zone</h3>
+                                <p>Irreversible actions</p>
+                            </div>
+                        </div>
+
                         <div class="setting-item">
                             <div class="setting-info">
-                                <label>Disconnect WhatsApp</label>
-                                <p>Log out from this device</p>
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6; color: var(--danger);">
+                                        <path
+                                            d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z" />
+                                    </svg>
+                                    <div>
+                                        <label>Disconnect WhatsApp</label>
+                                        <p>Log out from this device</p>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="btn-danger" id="disconnect-btn">Disconnect</button>
+                            <button class="btn-danger" id="disconnect-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z" />
+                                </svg>
+                                Disconnect
+                            </button>
                         </div>
                     </div>
                 </div>
