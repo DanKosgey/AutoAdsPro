@@ -705,13 +705,13 @@ export class WhatsAppClient {
           .where(eq(contacts.phone, contact.phone));
       });
 
-      // 6. Alert Owner if Action Required
-      if (profileUpdate.action_required && config.ownerPhone) {
-        const alertMsg = `*🛎️ ACTION REQUIRED*\n\nContact: ${profileUpdate.name || contact.phone}\nReason: ${profileUpdate.summary}\n\nReview chat to decide.`;
-        const ownerJid = config.ownerPhone.includes('@s.whatsapp.net') ? config.ownerPhone : config.ownerPhone + '@s.whatsapp.net';
-        console.log(`🛎️ Sending Profile Alert to Owner (${ownerJid})...`);
-        await this.sock!.sendMessage(ownerJid, { text: alertMsg });
-      }
+      // 6. Alert Owner if Action Required - DISABLED (user wants summaries only, no alerts)
+      // if (profileUpdate.action_required && config.ownerPhone) {
+      //   const alertMsg = `*🛎️ ACTION REQUIRED*\n\nContact: ${profileUpdate.name || contact.phone}\nReason: ${profileUpdate.summary}\n\nReview chat to decide.`;
+      //   const ownerJid = config.ownerPhone.includes('@s.whatsapp.net') ? config.ownerPhone : config.ownerPhone + '@s.whatsapp.net';
+      //   console.log(`🛎️ Sending Profile Alert to Owner (${ownerJid})...`);
+      //   await this.sock!.sendMessage(ownerJid, { text: alertMsg });
+      // }
     }
   }
 }
