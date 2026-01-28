@@ -146,16 +146,26 @@ export class GeminiService {
 
     const currentKey = keyManager.getCurrentKey?.() || 'unknown';
 
-    // Rate limit error - mark key and try another
+    // Rate limit error (429) OR Service Overload (503)
     if (this._isRateLimitError(error)) {
-      const retrySeconds = this._extractRetryDelay(error);
-      console.warn(
-        `⚠️ Key ending in ...${currentKey.slice(-4)} hit Rate Limit (429). ` +
-        `Retry after ${retrySeconds}s. Switching keys...`
-      );
-      keyManager.markRateLimited(currentKey, retrySeconds);
-      await this._delay(RATE_LIMIT_CONFIG.RETRY_DELAY_MS);
-      return true;
+      const isOverloaded = error.status === 503 || error.code === 503 || error.message?.includes('503') || error.message?.includes('overloaded');
+
+      if (isOverloaded) {
+        // 503 Service Unavailable: Wait with exponential strategy, don't necessarily switch keys (problem is global)
+        console.warn(`⚠️ Gemini Service Overloaded (503). Waiting ${RATE_LIMIT_CONFIG.MIN_REQUEST_SPACING_MS}ms before retry...`);
+        await this._delay(RATE_LIMIT_CONFIG.MIN_REQUEST_SPACING_MS * 2); // Wait longer for 503
+        return true;
+      } else {
+        // 429 Rate Limit: Switch keys
+        const retrySeconds = this._extractRetryDelay(error);
+        console.warn(
+          `⚠️ Key ending in ...${currentKey.slice(-4)} hit Rate Limit (429). ` +
+          `Retry after ${retrySeconds}s. Switching keys...`
+        );
+        keyManager.markRateLimited(currentKey, retrySeconds);
+        await this._delay(RATE_LIMIT_CONFIG.RETRY_DELAY_MS);
+        return true;
+      }
     }
 
     // Invalid or expired key - skip this key
@@ -210,7 +220,11 @@ export class GeminiService {
     return (
       error.status === ERROR_CODES.RATE_LIMIT ||
       error.code === ERROR_CODES.RATE_LIMIT ||
-      error.message?.includes('429')
+      error.status === 503 || // Handle Service Unavailable
+      error.code === 503 ||
+      error.message?.includes('429') ||
+      error.message?.includes('503') ||
+      error.message?.includes('overloaded') // Catch "The model is overloaded"
     );
   }
 
