@@ -633,10 +633,33 @@ export class WhatsAppClient {
     if (geminiResponse.type === 'text' && geminiResponse.content) {
       await this.sendResponseAndLog(remoteJid, geminiResponse.content, contact, history, fullText);
     } else if (geminiResponse.type === 'tool_call') {
-      // Loop exited but AI still wants to call tools. Prevent silent failure.
-      console.warn(`⚠️ Max tool depth (${MAX_TOOL_DEPTH}) exceeded. Sending failover message.`);
-      const errorMsg = "I'm having trouble getting all the information. I might be getting stuck in a research loop. Could you ask a more specific question?";
-      await this.sendResponseAndLog(remoteJid, errorMsg, contact, history, fullText);
+      // Loop exited but AI still wants to call tools.
+      // FORCE A FINAL ANSWER based on what we have.
+      console.warn(`⚠️ Max tool depth (${MAX_TOOL_DEPTH}) exceeded. Forcing final response from AI...`);
+
+      try {
+        const forcedResponse = await geminiService.generateReply(
+          history.concat(`Them: ${fullText}`, `[System: Maximum tool calls reached. You MUST NOT call any more tools. Please provide the best possible answer based on the information you have gathered so far. Do not apologize for the limit, just answer the user's question with the data you have.]`),
+          userRoleContext,
+          isOwner,
+          sanitizeProfile(currentAiProfile),
+          sanitizeProfile(currentUserProfile),
+          systemPrompt
+        );
+
+        if (forcedResponse.type === 'text' && forcedResponse.content) {
+          console.log(`✅ Generated forced response after tool limit.`);
+          await this.sendResponseAndLog(remoteJid, forcedResponse.content, contact, history, fullText);
+        } else {
+          // Still trying to call tools? Give up.
+          const errorMsg = "I found some information but I'm having trouble synthesizing it. Please try asking a more specific question.";
+          await this.sendResponseAndLog(remoteJid, errorMsg, contact, history, fullText);
+        }
+      } catch (e) {
+        console.error('Error fetching forced response:', e);
+        const errorMsg = "I'm having trouble getting all the information. I might be getting stuck in a research loop.";
+        await this.sendResponseAndLog(remoteJid, errorMsg, contact, history, fullText);
+      }
     }
   }
 
