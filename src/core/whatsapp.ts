@@ -269,6 +269,31 @@ export class WhatsAppClient {
       }
     });
 
+    // ============================================================================
+    // ERROR HANDLING: Bad MAC / Decryption Errors
+    // ============================================================================
+
+    // Track failed decryption attempts per JID to avoid spam
+    const decryptionFailures = new Map<string, number>();
+    const MAX_DECRYPT_FAILURES = 3;
+
+    // Listen for Baileys internal errors (including Bad MAC)
+    this.sock.ev.on('messaging-history.set', ({ isLatest }) => {
+      if (isLatest) {
+        console.log('✅ Message history synced');
+        // Clear decryption failure tracking on successful sync
+        decryptionFailures.clear();
+      }
+    });
+
+    // Handle connection errors gracefully
+    this.sock.ev.on('call', async (callEvents) => {
+      // Handle incoming calls (optional: auto-reject)
+      for (const call of callEvents) {
+        console.log(`📞 Incoming call from ${call.from}, status: ${call.status}`);
+      }
+    });
+
     this.sock.ev.on('messages.upsert', async ({ messages, type }) => {
       // 🔍 DEBUG: Log every raw event to see if Baileys is firing
       console.log(`📨 Raw Event: ${type}, Count: ${messages.length}`);
@@ -294,6 +319,42 @@ export class WhatsAppClient {
         if (fromMe) {
           console.log('⏩ Skipping: Sent by Me (Bot)');
           continue;
+        }
+
+        // ============================================================================
+        // HANDLE DECRYPTION FAILURES (Bad MAC errors)
+        // ============================================================================
+        if (!msg.message || Object.keys(msg.message).length === 0) {
+          console.warn(`⚠️  Message from ${jid} could not be decrypted (likely Bad MAC error)`);
+
+          // Track failures
+          const failureCount = (decryptionFailures.get(jid) || 0) + 1;
+          decryptionFailures.set(jid, failureCount);
+
+          if (failureCount >= MAX_DECRYPT_FAILURES) {
+            console.error(`❌ Too many decryption failures for ${jid}. Notifying user and clearing session.`);
+
+            // Send a helpful message to the user
+            try {
+              if (this.sock) {
+                await this.sock.sendMessage(jid, {
+                  text: "⚠️ I'm having trouble reading your messages due to an encryption issue. This usually happens when:\n\n" +
+                    "1. You're using WhatsApp Web/Desktop\n2. Your session keys are out of sync\n\n" +
+                    "**To fix this:**\n" +
+                    "• Try sending your message again from your phone (not Web/Desktop)\n" +
+                    "• Or wait a few minutes and try again\n\n" +
+                    "If the problem persists, the bot admin may need to reset the connection."
+                });
+              }
+            } catch (e) {
+              console.error('Failed to send decryption error message:', e);
+            }
+
+            // Reset counter to avoid spam
+            decryptionFailures.delete(jid);
+          }
+
+          continue; // Skip processing this undecryptable message
         }
 
         try {

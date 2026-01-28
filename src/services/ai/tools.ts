@@ -8,6 +8,7 @@ import { db } from '../../database';
 import { messageLogs } from '../../database/schema';
 import { ilike, desc } from 'drizzle-orm';
 import * as ownerTools from './ownerTools';
+import { webScraper } from '../webScraper';
 
 export const AI_TOOLS = [
     {
@@ -111,6 +112,42 @@ export const AI_TOOLS = [
                     },
                     required: []
                 }
+            },
+            {
+                name: "browse_url",
+                description: "Fetch and extract content from a website URL. ONLY use this when the user explicitly requests information that requires browsing external websites (e.g., 'check the news', 'what is the price of X'). Do NOT use for general knowledge queries the AI can answer itself.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        url: {
+                            type: "STRING",
+                            description: "The full URL to fetch (e.g., 'https://example.com/article'). Must be a valid http or https URL."
+                        },
+                        extract_type: {
+                            type: "STRING",
+                            description: "What to extract: 'metadata' (title + description only), 'summary' (title + first paragraphs, default), or 'full' (entire page content)."
+                        }
+                    },
+                    required: ["url"]
+                }
+            },
+            {
+                name: "search_web",
+                description: "Search for information on any topic by intelligently determining the best source URL. Use this when the user asks for current information on news, sports, finance, weather, geopolitics, or any topic requiring real-time data. The AI will automatically find and browse the appropriate website.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        query: {
+                            type: "STRING",
+                            description: "The search query or topic (e.g., 'latest AI news', 'Bitcoin price', 'weather in Nairobi', 'Premier League scores')"
+                        },
+                        category: {
+                            type: "STRING",
+                            description: "Optional category hint: 'news', 'sports', 'finance', 'weather', 'tech', or 'general'. Helps determine the best source."
+                        }
+                    },
+                    required: ["query"]
+                }
             }
         ]
     }
@@ -194,6 +231,28 @@ export async function executeLocalTool(name: string, args: any, context: any) {
                 return {
                     result: `Current time: ${new Date().toLocaleString()}\nTimezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`
                 };
+            }
+
+        case 'browse_url':
+            try {
+                const { url, extract_type = 'summary' } = args;
+                console.log(`🌐 Browsing URL: ${url} (extract: ${extract_type})`);
+                const content = await webScraper.scrapeUrl(url, extract_type);
+                return { result: content };
+            } catch (e: any) {
+                console.error('Browse URL error:', e.message);
+                return { error: `Failed to browse URL: ${e.message}` };
+            }
+
+        case 'search_web':
+            try {
+                const { query, category } = args;
+                console.log(`🔍 Web search: "${query}"${category ? ` (category: ${category})` : ''}`);
+                const content = await webScraper.searchWeb(query, category);
+                return { result: content };
+            } catch (e: any) {
+                console.error('Search web error:', e.message);
+                return { error: `Failed to search web: ${e.message}` };
             }
 
         default:
