@@ -1218,6 +1218,7 @@ async function createCampaign() {
             btn.textContent = 'Started ✓';
             statusMsg.textContent = result.message;
             statusMsg.style.color = 'var(--success)';
+            if (window.refreshCampaigns) window.refreshCampaigns();
 
             setTimeout(() => {
                 btn.textContent = 'Start Campaign';
@@ -1328,3 +1329,63 @@ async function saveGroupSelection() {
         btn.disabled = false;
     }
 }
+
+/* Marketing Tabs & Campaigns List */
+function switchMarketingTab(tabName) {
+    document.querySelectorAll('.marketing-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabName) btn.classList.add('active');
+    });
+    document.querySelectorAll('.marketing-tab-content').forEach(content => {
+        content.style.display = 'none';
+        content.classList.remove('active');
+    });
+    const target = document.getElementById(`tab-${tabName}`);
+    if (target) {
+        target.style.display = 'block';
+        setTimeout(() => target.classList.add('active'), 10);
+        if (tabName === 'campaigns') refreshCampaigns();
+        if (tabName === 'groups') refreshGroups();
+    }
+}
+
+async function refreshCampaigns() {
+    const listContainer = document.getElementById('campaigns-list-container');
+    if (!listContainer) return;
+    listContainer.innerHTML = '<div class="campaign-empty" style="color:#6b7280; text-align:center;">Loading campaigns...</div>';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/marketing/campaigns`);
+        const result = await response.json();
+
+        if (result.success && result.campaigns && result.campaigns.length > 0) {
+            listContainer.innerHTML = result.campaigns.map(c => `
+                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="margin:0 0 0.25rem 0; color: var(--text-primary); font-size: 1rem;">${c.name}</h4>
+                        <small style="color: var(--text-secondary); display: block;">Created: ${new Date(c.createdAt).toLocaleDateString()}</small>
+                        <small style="color: var(--text-secondary);">Schedule: ${c.morningTime || '-'} / ${c.afternoonTime || '-'} / ${c.eveningTime || '-'}</small>
+                    </div>
+                    <span style="
+                        padding: 0.25rem 0.75rem; 
+                        border-radius: 999px; 
+                        font-size: 0.75rem; 
+                        font-weight: 600;
+                        background: ${c.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.2)'};
+                        color: ${c.status === 'active' ? '#34d399' : '#9ca3af'};
+                        border: 1px solid ${c.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)'};
+                    ">${c.status.toUpperCase()}</span>
+                </div>
+            `).join('');
+        } else {
+            listContainer.innerHTML = '<div class="campaign-empty" style="color:#6b7280; text-align:center; padding: 1rem;">No campaigns found. Start one above! 🚀</div>';
+        }
+    } catch (e) {
+        console.error("Error loading campaigns", e);
+        listContainer.innerHTML = '<div class="campaign-empty" style="color:var(--danger); text-align:center;">Failed to load campaigns.</div>';
+    }
+}
+
+// Make functions global
+window.switchMarketingTab = switchMarketingTab;
+window.refreshCampaigns = refreshCampaigns;

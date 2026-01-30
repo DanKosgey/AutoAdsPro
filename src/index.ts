@@ -480,6 +480,16 @@ app.post('/api/marketing/campaign', async (req, res) => {
     }
 });
 
+app.get('/api/marketing/campaigns', async (req, res) => {
+    try {
+        const campaigns = await db.select().from(marketingCampaigns).orderBy(desc(marketingCampaigns.createdAt));
+        res.json({ success: true, campaigns });
+    } catch (error) {
+        console.error('Failed to fetch campaigns:', error);
+        res.status(500).json({ error: 'Failed to fetch campaigns' });
+    }
+});
+
 app.get('/api/marketing/groups', async (req, res) => {
     try {
         if (!whatsappClient) {

@@ -202,13 +202,21 @@ export class AdContentService {
     }
 
     private constructImagePrompt(profile: any, style: VisualStyle, timeContext: TimeOfDay): string {
-        return `A professional commercial advertisement photo for "${profile.productInfo}". 
-        Brand Context: ${profile.uniqueSellingPoint}.
-        Visual Strategy: ${this.styleGuides[style]}
-        Lighting Context: ${this.timeInfluence[timeContext]}
+        return `High-end commercial product photography of "${profile.productInfo}". 
+        The image must prominently feature the product/service itself in a realistic setting.
         
-        Technical Specs: 8k resolution, photorealistic, cinematic color grading, extremely detailed textures.
-        IMPORTANT: ABSOLUTELY NO TEXT, NO LOGOS, NO WATERMARKS. Pure visual storytelling.`;
+        Detailed Context: ${profile.uniqueSellingPoint}.
+        Target Audience: ${profile.targetAudience}.
+        
+        Visual Style: ${this.styleGuides[style]}
+        Lighting/Mood: ${this.timeInfluence[timeContext]}
+        
+        CRITICAL VISUAL GUIDELINES:
+        - PHOTOREALISTIC: Use 8k resolution, highly detailed textures, depth of field.
+        - FOCUS ON SUBJECT: Show the actual product or service result. Avoid generic abstract AI shapes.
+        - COMPOSITION: Professional rule-of-thirds or centered hero shot.
+        - NO text, NO logos, NO watermarks, NO distorted faces or hands.
+        - Make it look like a real advertisement from a premium magazine.`;
     }
 
     private formatAdOutput(adJson: any): string {

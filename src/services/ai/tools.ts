@@ -499,33 +499,28 @@ export async function executeLocalTool(name: string, args: any, context: any) {
 
                 // Let's modify executeMarketingSlot logic to be reusable?
                 // Or just generate the content here and return it.
-
                 const { adContentService } = await import('../marketing/adContentService');
                 const { factService } = await import('../marketing/factService');
 
                 if (args.type.startsWith('ad')) {
-                    // Get active campaign id? Or just generate
-                    const campaign = await db.query.marketingCampaigns.findFirst({ where: eq(marketingCampaigns.status, 'active') });
-                    if (!campaign) return { error: "No active campaign." };
-
-                    let style = 'balanced';
-                    if (args.type.includes('morning')) style = 'energetic';
-                    else if (args.type.includes('afternoon')) style = 'practical';
-                    else if (args.type.includes('evening')) style = 'relaxed';
-
-                    const ad = await adContentService.generateAd(campaign.id, style);
-
-                    if (ad.imagePath) {
-                        return {
-                            result: `[AD GENERATED] \nText: ${ad.text}`,
-                            _data: {
-                                type: 'image_file',
-                                path: ad.imagePath,
-                                caption: ad.text
-                            }
-                        };
+                    const client = context?.client;
+                    if (!client) {
+                        return { error: "WhatsApp Client not available in context. Cannot broadcast." };
                     }
-                    return { result: ad.text };
+
+                    const { marketingService } = await import('../marketing/marketingService');
+
+                    // Trigger the ACTUAL broadcast logic
+                    console.log(`🚀 Tool 'post_now' triggering broadcast for slot: ${args.type}`);
+
+                    // Execute in background to avoid timeout? No, let's await it so we know if it failed.
+                    // But executeMarketingSlot returns void.
+                    await marketingService.executeMarketingSlot(client, args.type);
+
+                    return {
+                        result: `✅ Broadcast command sent successfully for '${args.type}'.\nThe ad is being generated and sent to all target groups now.`
+                    };
+
                 } else {
                     let time = 'morning';
                     if (args.type.includes('afternoon')) time = 'afternoon';
