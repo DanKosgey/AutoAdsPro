@@ -127,6 +127,35 @@ export class MarketingService {
     }
 
     /**
+     * Update an existing campaign
+     */
+    public async updateCampaign(id: number, updates: {
+        name?: string,
+        startDate?: Date,
+        morningTime?: string,
+        afternoonTime?: string,
+        eveningTime?: string,
+        status?: string,
+        productInfo?: string,
+        targetAudience?: string,
+        uniqueSellingPoint?: string,
+        brandVoice?: string,
+        targetGroups?: any
+    }): Promise<void> {
+        await db.update(marketingCampaigns)
+            .set(updates)
+            .where(eq(marketingCampaigns.id, id));
+    }
+
+    /**
+     * Delete a campaign
+     */
+    public async deleteCampaign(id: number): Promise<void> {
+        await db.delete(marketingCampaigns)
+            .where(eq(marketingCampaigns.id, id));
+    }
+
+    /**
      * Execute a specific marketing slot (Ad or Fact)
      * Called by Scheduler
      */

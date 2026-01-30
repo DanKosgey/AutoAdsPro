@@ -1188,8 +1188,11 @@ async function saveMarketingProfile() {
 async function createCampaign() {
     const nameInput = document.getElementById('marketing-campaign-name');
     const name = nameInput.value || 'New Campaign';
+    const campaignId = document.getElementById('campaign-id').value; // Check for ID (Edit Mode)
+
     const statusMsg = document.getElementById('campaign-status-msg');
     const btn = document.getElementById('create-campaign-btn');
+    const OriginalBtnText = btn.textContent;
 
     // Get posting times
     const morningTime = document.getElementById('marketing-morning-time').value || '07:00';
@@ -1213,42 +1216,49 @@ async function createCampaign() {
         }
     }
 
-    btn.textContent = 'Creating...';
+    btn.textContent = campaignId ? 'Updating...' : 'Creating...';
     btn.disabled = true;
-    statusMsg.textContent = 'Initializing campaign...';
+    statusMsg.textContent = campaignId ? 'Saving changes...' : 'Initializing campaign...';
+
+    const method = campaignId ? 'PUT' : 'POST';
+    const url = campaignId ? `${API_BASE}/api/marketing/campaign/${campaignId}` : `${API_BASE}/api/marketing/campaign`;
 
     try {
-        const response = await fetch(`${API_BASE}/api/marketing/campaign`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name,
                 morningTime,
                 afternoonTime,
-                eveningTime
+                eveningTime,
+                ...businessContext
             })
         });
 
         const result = await response.json();
 
         if (result.success) {
-            btn.textContent = 'Started ✓';
-            statusMsg.textContent = result.message;
+            btn.textContent = campaignId ? 'Updated ✓' : 'Started ✓';
+            statusMsg.textContent = result.message || 'Success';
             statusMsg.style.color = 'var(--success)';
+
             if (window.refreshCampaigns) window.refreshCampaigns();
 
+            // Clear form after delay
             setTimeout(() => {
-                btn.textContent = 'Start Campaign';
+                if (window.resetCampaignForm) window.resetCampaignForm();
                 btn.disabled = false;
-            }, 3000);
+            }, 2000);
+
         } else {
-            throw new Error(result.error || 'Creation failed');
+            throw new Error(result.error || 'Operation failed');
         }
     } catch (error) {
-        console.error('Failed to create campaign:', error);
+        console.error('Failed to save campaign:', error);
         statusMsg.textContent = 'Error: ' + error.message;
         statusMsg.style.color = 'var(--danger)';
-        btn.textContent = 'Start Campaign';
+        btn.textContent = OriginalBtnText;
         btn.disabled = false;
     }
 }
@@ -1273,23 +1283,23 @@ async function refreshGroups() {
             } else {
                 saveBtn.style.display = 'block';
                 groupsList.innerHTML = result.groups.map((group, index) => `
-                    <div style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="padding: 0.75rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1);">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <input type="checkbox" class="group-select-checkbox" 
                                 value="${group.id}" 
                                 id="group-${index}"
                                 ${group.selected ? 'checked' : ''}
-                                style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                                style="width: 1.25rem; height: 1.25rem; cursor: pointer; accent-color: var(--primary);">
                             <div>
                                 <label for="group-${index}" style="cursor: pointer;">
                                     <strong style="color: var(--text-primary);">${group.name || 'Unknown Group'}</strong>
                                 </label>
                                 <br>
-                                <small style="color: #6b7280;">${group.id}</small>
+                                <small style="color: var(--text-secondary);">${group.id}</small>
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                            <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.3);">
                                 ${group.participants || 0} members
                             </span>
                         </div>
@@ -1301,28 +1311,60 @@ async function refreshGroups() {
         }
     } catch (error) {
         console.error('Failed to refresh groups:', error);
-        groupsList.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        groupsList.innerHTML = `<p style="color: var(--danger); text-align: center;">Error: ${error.message}</p>`;
     } finally {
         btn.textContent = '🔄 Refresh Groups';
         btn.disabled = false;
     }
 }
 
+async function loadCampaignTargets(campaignId) {
+    if (!campaignId) return;
+
+    // Clear current selection
+    document.querySelectorAll('.group-select-checkbox').forEach(cb => cb.checked = false);
+
+    try {
+        // Find campaign in global store (if available) or fetch
+        let campaign = window.allCampaigns ? window.allCampaigns.find(c => c.id == campaignId) : null;
+
+        if (!campaign) {
+            const res = await fetch(`${API_BASE}/api/marketing/campaigns`); // Fallback if global store empty
+            const data = await res.json();
+            campaign = data.campaigns.find(c => c.id == campaignId);
+        }
+
+        if (campaign && campaign.targetGroups) {
+            campaign.targetGroups.forEach(groupId => {
+                const cb = document.querySelector(`.group-select-checkbox[value="${groupId}"]`);
+                if (cb) cb.checked = true;
+            });
+        }
+    } catch (e) {
+        console.error("Failed to load campaign targets", e);
+    }
+}
+
 // Save Group Selection
 async function saveGroupSelection() {
     const btn = document.getElementById('save-groups-btn');
+    const campaignId = document.getElementById('target-campaign-select').value;
+
+    if (!campaignId) {
+        alert("Please select a Campaign first!");
+        return;
+    }
+
     const checkboxes = document.querySelectorAll('.group-select-checkbox:checked');
     const selectedGroups = Array.from(checkboxes).map(cb => cb.value);
-
-    // If no groups selected, warn user (or allow clearing?)
-    // Let's allow clearing (selecting none pauses broadcasting effectively)
 
     const originalText = btn.textContent;
     btn.textContent = 'Saving...';
     btn.disabled = true;
 
     try {
-        const response = await fetch(`${API_BASE}/api/marketing/campaign/targets`, {
+        // We use the Campaign Update Endpoint
+        const response = await fetch(`${API_BASE}/api/marketing/campaign/${campaignId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ targetGroups: selectedGroups })
@@ -1336,6 +1378,13 @@ async function saveGroupSelection() {
                 btn.textContent = originalText;
                 btn.disabled = false;
             }, 2000);
+
+            // Also update the global store if exists
+            if (window.allCampaigns) {
+                const c = window.allCampaigns.find(x => x.id == campaignId);
+                if (c) c.targetGroups = selectedGroups;
+            }
+
         } else {
             throw new Error(result.error || 'Failed to save selection');
         }
@@ -1344,6 +1393,66 @@ async function saveGroupSelection() {
         alert('Error saving selection: ' + error.message);
         btn.textContent = originalText;
         btn.disabled = false;
+    }
+}
+
+window.resetCampaignForm = function () {
+    document.getElementById('marketing-campaign-name').value = '';
+    document.getElementById('campaign-id').value = '';
+    document.getElementById('create-campaign-btn').textContent = 'Start Campaign';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+    const statusMsg = document.getElementById('campaign-status-msg');
+    if (statusMsg) statusMsg.textContent = '';
+
+    document.getElementById('campaign-custom-profile-check').checked = false;
+    if (window.toggleCampaignProfile) toggleCampaignProfile({ checked: false });
+
+    document.getElementById('camp-product').value = '';
+    document.getElementById('camp-audience').value = '';
+    document.getElementById('camp-usp').value = '';
+    document.getElementById('camp-voice').value = 'professional';
+}
+
+window.editCampaign = function (id) {
+    if (!window.allCampaigns) return;
+    const campaign = window.allCampaigns.find(c => c.id === id);
+    if (!campaign) return;
+
+    document.getElementById('marketing-campaign-name').value = campaign.name;
+    document.getElementById('marketing-morning-time').value = campaign.morningTime || '07:00';
+    document.getElementById('marketing-afternoon-time').value = campaign.afternoonTime || '13:00';
+    document.getElementById('marketing-evening-time').value = campaign.eveningTime || '19:00';
+
+    document.getElementById('campaign-id').value = campaign.id;
+    document.getElementById('create-campaign-btn').textContent = 'Update Campaign';
+    document.getElementById('cancel-edit-btn').style.display = 'block';
+
+    // Switch to profile tab
+    switchMarketingTab('campaigns');
+
+    if (campaign.productInfo) {
+        document.getElementById('campaign-custom-profile-check').checked = true;
+        if (window.toggleCampaignProfile) toggleCampaignProfile({ checked: true });
+        document.getElementById('camp-product').value = campaign.productInfo || '';
+        document.getElementById('camp-audience').value = campaign.targetAudience || '';
+        document.getElementById('camp-usp').value = campaign.uniqueSellingPoint || '';
+        document.getElementById('camp-voice').value = campaign.brandVoice || 'professional';
+    } else {
+        document.getElementById('campaign-custom-profile-check').checked = false;
+        if (window.toggleCampaignProfile) toggleCampaignProfile({ checked: false });
+    }
+
+    document.getElementById('tab-campaigns').scrollIntoView({ behavior: 'smooth' });
+}
+
+window.deleteCampaign = async function (id) {
+    if (!confirm('Are you sure you want to delete this campaign?')) return;
+
+    try {
+        await fetch(`${API_BASE}/api/marketing/campaign/${id}`, { method: 'DELETE' });
+        if (window.refreshCampaigns) refreshCampaigns();
+    } catch (e) {
+        alert('Failed to delete: ' + e.message);
     }
 }
 
@@ -1368,6 +1477,8 @@ function switchMarketingTab(tabName) {
 
 async function refreshCampaigns() {
     const listContainer = document.getElementById('campaigns-list-container');
+    const selectDropdown = document.getElementById('target-campaign-select');
+
     if (!listContainer) return;
     listContainer.innerHTML = '<div class="campaign-empty" style="color:#6b7280; text-align:center;">Loading campaigns...</div>';
 
@@ -1375,27 +1486,49 @@ async function refreshCampaigns() {
         const response = await fetch(`${API_BASE}/api/marketing/campaigns`);
         const result = await response.json();
 
-        if (result.success && result.campaigns && result.campaigns.length > 0) {
-            listContainer.innerHTML = result.campaigns.map(c => `
-                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h4 style="margin:0 0 0.25rem 0; color: var(--text-primary); font-size: 1rem;">${c.name}</h4>
-                        <small style="color: var(--text-secondary); display: block;">Created: ${new Date(c.createdAt).toLocaleDateString()}</small>
-                        <small style="color: var(--text-secondary);">Schedule: ${c.morningTime || '-'} / ${c.afternoonTime || '-'} / ${c.eveningTime || '-'}</small>
+        if (result.success && result.campaigns) {
+            window.allCampaigns = result.campaigns; // Store globally for editing
+
+            // Populate Dropdown in Groups Tab
+            if (selectDropdown) {
+                const currentVal = selectDropdown.value;
+                selectDropdown.innerHTML = '<option value="">-- Select a Campaign --</option>' +
+                    result.campaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                if (currentVal) selectDropdown.value = currentVal; // Restore selection if valid
+            }
+
+            if (result.campaigns.length > 0) {
+                listContainer.innerHTML = result.campaigns.map(c => `
+                    <div class="ui-card" style="margin-bottom: 1rem; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h4 style="margin:0 0 0.25rem 0; color: var(--text-primary); font-size: 1rem;">${c.name}</h4>
+                                <small style="color: var(--text-secondary); display: block;">Created: ${new Date(c.createdAt).toLocaleDateString()}</small>
+                                <small style="color: var(--text-secondary);">Schedule: ${c.morningTime || '-'} / ${c.afternoonTime || '-'} / ${c.eveningTime || '-'}</small>
+                                <div style="margin-top: 0.5rem;">
+                                    <span style="
+                                        padding: 0.25rem 0.75rem; 
+                                        border-radius: 999px; 
+                                        font-size: 0.75rem; 
+                                        font-weight: 600;
+                                        background: ${c.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.2)'};
+                                        color: ${c.status === 'active' ? '#34d399' : '#9ca3af'};
+                                        border: 1px solid ${c.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)'};
+                                    ">${c.status.toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button onclick="editCampaign(${c.id})" class="btn-sm-secondary" style="padding: 0.25rem 0.5rem;" title="Edit">✏️</button>
+                                <button onclick="deleteCampaign(${c.id})" class="btn-sm-secondary" style="padding: 0.25rem 0.5rem; color: var(--danger); border-color: var(--danger);" title="Delete">🗑️</button>
+                            </div>
+                        </div>
                     </div>
-                    <span style="
-                        padding: 0.25rem 0.75rem; 
-                        border-radius: 999px; 
-                        font-size: 0.75rem; 
-                        font-weight: 600;
-                        background: ${c.status === 'active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.2)'};
-                        color: ${c.status === 'active' ? '#34d399' : '#9ca3af'};
-                        border: 1px solid ${c.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)'};
-                    ">${c.status.toUpperCase()}</span>
-                </div>
-            `).join('');
+                `).join('');
+            } else {
+                listContainer.innerHTML = '<div class="campaign-empty" style="color:#6b7280; text-align:center; padding: 1rem;">No campaigns found. Start one above! 🚀</div>';
+            }
         } else {
-            listContainer.innerHTML = '<div class="campaign-empty" style="color:#6b7280; text-align:center; padding: 1rem;">No campaigns found. Start one above! 🚀</div>';
+            listContainer.innerHTML = '<div class="campaign-empty" style="color:var(--danger); text-align:center;">Failed to load campaigns.</div>';
         }
     } catch (e) {
         console.error("Error loading campaigns", e);
@@ -1408,6 +1541,6 @@ window.switchMarketingTab = switchMarketingTab;
 window.refreshCampaigns = refreshCampaigns;
 function toggleCampaignProfile(checkbox) {
     const container = document.getElementById('campaign-custom-profile');
-    if(container) container.style.display = checkbox.checked ? 'block' : 'none';
+    if (container) container.style.display = checkbox.checked ? 'block' : 'none';
 }
 

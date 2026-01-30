@@ -487,6 +487,30 @@ app.post('/api/marketing/campaign', async (req, res) => {
     }
 });
 
+app.put('/api/marketing/campaign/:id', async (req, res) => {
+    try {
+        const { marketingService } = await import('./services/marketing/marketingService');
+        const id = parseInt(req.params.id);
+        await marketingService.updateCampaign(id, req.body);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to update campaign:', error);
+        res.status(500).json({ error: 'Failed to update campaign' });
+    }
+});
+
+app.delete('/api/marketing/campaign/:id', async (req, res) => {
+    try {
+        const { marketingService } = await import('./services/marketing/marketingService');
+        const id = parseInt(req.params.id);
+        await marketingService.deleteCampaign(id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to delete campaign:', error);
+        res.status(500).json({ error: 'Failed to delete campaign' });
+    }
+});
+
 app.get('/api/marketing/campaigns', async (req, res) => {
     try {
         const campaigns = await db.select().from(marketingCampaigns).orderBy(desc(marketingCampaigns.createdAt));
