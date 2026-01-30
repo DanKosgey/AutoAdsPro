@@ -90,12 +90,14 @@ export class AdContentService {
 
     private getRandomVisualScenario(isService: boolean): string {
         const productScenarios = [
-            "Macro Detail: Extreme close-up of the product texture/material. Shallow depth of field.",
-            "In-Context Action: The product being used in its natural environment by a person (hands/partial view).",
             "Studio Hero: The product floating or placed on a minimal podium with dramatic lighting.",
-            "Knolling: Top-down flat lay arrangement of the product with related high-end accessories.",
-            "Natural Light: The product placed on a table/surface near a window with beautiful shadows.",
-            "Splash/Dynamic: The product in motion, with dynamic elements (water splash, dust, speed lines) if applicable."
+            "Lifestyle Context: Product being used in a beautiful, aspirational real-world setting.",
+            "Close-up Detail: Extreme macro shot highlighting craftsmanship, texture, or unique features.",
+            "Flat Lay: Overhead shot with complementary items arranged artistically around the product.",
+            "Action Shot: Product in motion or being actively used, frozen in a dynamic moment.",
+            "Minimalist Zen: Product alone on a solid color background with perfect shadows and reflections.",
+            "Nature Integration: Product harmoniously placed in a natural outdoor environment.",
+            "Urban Edge: Product in a modern city setting with architecture and street vibes."
         ];
 
         const serviceScenarios = [
@@ -104,7 +106,9 @@ export class AdContentService {
             "Human Connection: Close-up of happy clients/people shaking hands or smiling authentically.",
             "Abstract Concept: A clean, modern 3D render representing growth, security, or efficiency.",
             "Workspace: A messy but aesthetic creative workspace showing the 'process' or tools of the trade.",
-            "Team Hero: A confident, diverse team standing together in a modern office or relevant location."
+            "Team Hero: A confident, diverse team standing together in a modern office or relevant location.",
+            "Digital Interface: Sleek UI/dashboard mockup showing the service in action on screens.",
+            "Metaphorical Visual: Creative metaphor (e.g., rocket for growth, shield for security, bridge for connection)."
         ];
 
         const set = isService ? serviceScenarios : productScenarios;
@@ -112,17 +116,22 @@ export class AdContentService {
     }
 
     private constructImagePrompt(profile: any, style: VisualStyle, timeContext: TimeOfDay, visualScenario: string): string {
-        const isService = this.detectServiceBusiness(profile.productInfo);
+        // Prioritize enhanced businessDescription if available
+        const businessContext = profile.businessDescription || profile.productInfo || 'innovative product';
+        const detailedContext = profile.businessDescription
+            ? profile.businessDescription
+            : `${profile.uniqueSellingPoint || 'quality service'}. Target: ${profile.targetAudience || 'general audience'}`;
+
+        const isService = this.detectServiceBusiness(businessContext);
         const subjectType = isService ? "SERVICE/CONCEPT" : "PHYSICAL PRODUCT";
 
         return `Professional Commercial Photography ($8k resolution, highly detailed).
         Subject Type: ${subjectType}
-        Subject Description: "${profile.productInfo}"
+        Subject Description: "${profile.productInfo || businessContext}"
         
         VISUAL SCENARIO: ${visualScenario}
         
-        Detailed Context: ${profile.uniqueSellingPoint}.
-        Target Audience: ${profile.targetAudience} (Use for styling/ambiance only).
+        Business Context: ${detailedContext}
         
         Visual Style: ${this.styleGuides[style]}
         Lighting/Mood: ${this.timeInfluence[timeContext]}
@@ -132,7 +141,8 @@ export class AdContentService {
         - COMPOSITION: Rule-of-thirds or centered hero shot based on scenario.
         - NO TEXT: Use absolutely NO text, logos, or watermarks in the image.
         - NO DEFORMITIES: Fix hands/faces if human subjects are present.
-        - Make it look like a real advertisement from a premium magazine.`;
+        - Make it look like a real advertisement from a premium magazine.
+        - INTERPRET CREATIVELY: If the product/service is abstract (like software/app), visualize it through metaphors, UI mockups, or conceptual representations.`;
     }
 
     private detectServiceBusiness(info: string): boolean {
