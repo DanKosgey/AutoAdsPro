@@ -1453,6 +1453,22 @@ window.editMiniCampaign = function (id) {
     document.getElementById('mini-voice').value = campaign.brandVoice || 'Professional';
     document.getElementById('mini-company-link').value = campaign.companyLink || '';
 
+    // Populate Business Description
+    if (campaign.businessDescription) {
+        document.getElementById('mini-business-desc').value = campaign.businessDescription;
+        document.getElementById('enhanced-desc-display').innerText = campaign.businessDescription;
+        document.getElementById('enhanced-desc-container').style.display = 'block';
+        // Also put it in the raw input so they can edit it if they want to re-enhance
+        // Or should we leave raw empty? Let's leave raw empty to signify 'this was AI generated' 
+        // OR better: put a placeholder or snippet. 
+        // Actually, if we have a saved description, let's just make sure the UI reflects it.
+    } else {
+        document.getElementById('mini-business-desc').value = '';
+        document.getElementById('enhanced-desc-display').innerText = '';
+        document.getElementById('enhanced-desc-container').style.display = 'none';
+        document.getElementById('mini-business-desc-raw').value = '';
+    }
+
     document.getElementById('mini-time-m').value = campaign.morningTime || "07:00";
     document.getElementById('mini-time-a').value = campaign.afternoonTime || "13:00";
     document.getElementById('mini-time-e').value = campaign.eveningTime || "19:00";
