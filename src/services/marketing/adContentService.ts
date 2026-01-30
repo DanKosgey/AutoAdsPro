@@ -351,7 +351,7 @@ Less is more. Bold and simple beats complex and detailed.`;
         if (typeof adJson === 'string') {
             // If AI returned plain text, append DM and link at the end
             let plainOutput = adJson;
-            plainOutput += `\n\n📩 DM me for details`;
+            plainOutput += `\n\n📩 DM me to book a call or for details`;
             if (companyLink) {
                 plainOutput += `\n🔗 ${companyLink}`;
             }
@@ -362,7 +362,7 @@ Less is more. Bold and simple beats complex and detailed.`;
         output += `${adJson.body}\n\n`;
 
         let cta = `👉 ${adJson.cta || 'Reply to learn more!'}`;
-        cta += `\n📩 DM me for details`; // Explicit DM instruction
+        cta += `\n📩 DM me to book a call or for details`; // Updated instruction
         if (companyLink) {
             cta += `\n🔗 ${companyLink}`;
         }
