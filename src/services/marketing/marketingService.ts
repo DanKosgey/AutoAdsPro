@@ -246,9 +246,9 @@ export class MarketingService {
                     console.log(`✅ Text ad sent to ${groupJid}`);
                 }
 
-                // Increased delay between groups for reliability
+                // Increased delay between groups for reliability and to avoid WhatsApp rate limits
                 if (groups.indexOf(groupJid) < groups.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds
+                    await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
                 }
             } catch (error) {
                 console.error(`❌ Failed to send to group ${groupJid}:`, error);
@@ -296,9 +296,9 @@ export class MarketingService {
                 await client.sendText(groupJid, message);
                 console.log(`✅ Sent fact to group: ${groupJid}`);
 
-                // 2-second delay between groups
+                // Delay between groups to avoid rate limits (consistent with ad broadcasts)
                 if (groups.indexOf(groupJid) < groups.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
                 }
             } catch (error) {
                 console.error(`❌ Failed to send fact to group ${groupJid}:`, error);

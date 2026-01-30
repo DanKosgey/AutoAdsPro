@@ -31,7 +31,7 @@ export class WhatsAppClient {
   private concurrencyController: ConcurrencyController | undefined;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
-  private qrCode: string | null = null; // Store QR code
+  private qrCode: string | null = null;
   private lastConnectTime: number = 0;
   private isLoggingOut: boolean = false;
 
@@ -54,8 +54,6 @@ export class WhatsAppClient {
         this.qrCode = null;
         this.reconnectAttempts = 0;
         console.log('✅ Logged out successfully');
-
-        // Reinitialize to get new QR code
         setTimeout(() => this.initialize(), 2000);
       } else {
         console.log('⚠️ No active connection to logout from');
@@ -68,24 +66,15 @@ export class WhatsAppClient {
 
   public async shutdown(): Promise<void> {
     console.log('🛑 Shutting down WhatsApp client...');
-
     try {
-      // Stop concurrency controller
       if (this.concurrencyController) {
         this.concurrencyController.stop();
       }
-
-      // Stop worker pool
       if (this.workerPool) {
         await this.workerPool.shutdown();
       }
-
-      // Stop queue metrics collection
       messageQueueService.stopMetricsCollection();
-
-      // Cleanup old queue messages
       await messageQueueService.cleanup();
-
       console.log('✅ WhatsApp client shutdown complete');
     } catch (error) {
       console.error('❌ Error during shutdown:', error);
@@ -93,13 +82,11 @@ export class WhatsAppClient {
     }
   }
 
-
   public async getAllGroups(): Promise<string[]> {
     if (!this.sock) {
       console.log('⚠️ WhatsApp not connected, cannot fetch groups');
       return [];
     }
-
     try {
       const groups = await this.sock.groupFetchAllParticipating();
       const groupJids = Object.keys(groups);
@@ -111,14 +98,11 @@ export class WhatsAppClient {
     }
   }
 
-
   async initialize() {
     this.isLoggingOut = false;
     console.log('🔌 Initializing Representative Agent...');
 
-    // 1. Try to acquire session lock
     console.log('🔒 Attempting to acquire session lock...');
-    // Wait slightly longer than the 2-minute lock expiry to ensure we catch the release
     const lockAcquired = await sessionManager.waitForLock(150000);
 
     if (!lockAcquired) {
@@ -131,7 +115,6 @@ export class WhatsAppClient {
 
     console.log('✅ Session lock acquired. Proceeding with connection...');
 
-    // Use Postgres Auth for persistence
     const { state, saveCreds } = await usePostgresAuthState('whatsapp_session');
 
     console.log('🔍 Auth State Check:');
@@ -143,10 +126,8 @@ export class WhatsAppClient {
       auth: state,
       browser: ['Representative', 'Chrome', '1.0.0'],
       syncFullHistory: false,
-      // Add retry configuration
       retryRequestDelayMs: 500,
       maxMsgRetryCount: 3,
-      // Prevent auto-reconnect on conflict
       shouldIgnoreJid: () => false,
     });
 
@@ -157,7 +138,7 @@ export class WhatsAppClient {
 
       if (qr) {
         console.log('📌 Scan the QR Code below to connect:');
-        this.qrCode = qr; // Save QR to state
+        this.qrCode = qr;
         require('qrcode-terminal').generate(qr, { small: true });
       }
 
@@ -169,19 +150,15 @@ export class WhatsAppClient {
         console.log('   Status Code:', error);
         console.log('   Error Data:', errorData);
 
-        // Handle conflict (440) - another instance connected
         if (error === 440 && errorData?.tag === 'conflict') {
           console.log('❌ Session conflict detected (440: replaced).');
           console.log('   This means another instance connected with the same credentials.');
           console.log('💡 Releasing lock and exiting to prevent conflict loop...');
-
-          // Release our lock since we've been replaced
           await sessionManager.releaseLock();
           process.exit(1);
           return;
         }
 
-        // Handle corrupted session (405)
         if (error === 405) {
           console.log('❌ Session data is corrupted or invalid (405 error).');
           console.log('💡 Solution: Run "npx ts-node scripts/clear-auth.ts" to clear session and generate a new QR code.');
@@ -190,12 +167,9 @@ export class WhatsAppClient {
           return;
         }
 
-        // Handle 401 (logged out)
-        // Skip if intentional logout (prevent process exit loop)
         if ((error === 401 || error === DisconnectReason.loggedOut) && !this.isLoggingOut) {
           console.log('❌ Session logged out or invalid (401).');
           console.log('💡 Clearing auth credentials to allow re-scan...');
-          // Import authCredentials in the file header first, but assuming it is available or I will fix the import
           try {
             await db.delete(authCredentials);
           } catch (deleteError) {
@@ -207,7 +181,6 @@ export class WhatsAppClient {
           return;
         }
 
-        // Handle decryption errors (usually means corrupted keys)
         if (lastDisconnect?.error?.message?.includes('Unsupported state or unable to authenticate data')) {
           console.log('❌ Decryption error detected. Session keys are corrupted.');
           console.log('💡 Solution: Clear the auth_credentials table and restart to get a new QR code.');
@@ -218,7 +191,6 @@ export class WhatsAppClient {
 
         const shouldReconnect = error !== DisconnectReason.loggedOut;
 
-        // FLAPPING CHECK: Only reset attempts if last session was > 60s
         if (shouldReconnect) {
           const sessionDuration = Date.now() - this.lastConnectTime;
           if (this.lastConnectTime > 0 && sessionDuration > 60000) {
@@ -244,31 +216,22 @@ export class WhatsAppClient {
         this.qrCode = null;
         this.lastConnectTime = Date.now();
 
-        // Initialize MessageSender with the connected socket
         this.messageSender = new MessageSender(this.sock!);
-
-        // Initialize ConversationManager
         this.conversationManager = new ConversationManager();
-
-        // Initialize MessageBuffer
         this.messageBuffer = new MessageBuffer((jid, messages) => this.processMessageBatch(jid, messages));
 
-        // Restore queue from database
         await messageQueueService.restoreQueue();
 
-        // Initialize Worker Pool
         this.workerPool = new WorkerPool(
           messageQueueService,
           this.processMessageBatch.bind(this)
         );
 
-        // Initialize Concurrency Controller
         this.concurrencyController = new ConcurrencyController(
           messageQueueService,
           this.workerPool
         );
 
-        // Start worker pool and concurrency controller
         this.workerPool.start().catch(err => {
           console.error('❌ Worker pool error:', err);
         });
@@ -276,48 +239,34 @@ export class WhatsAppClient {
 
         console.log('🎯 Advanced queue system initialized');
 
-        // Initialize Notification Service
         if (this.sock) {
           notificationService.init(this.sock);
         }
 
-        // Initialize Scheduler Service
-        // This starts the cron jobs for morning motivation and evening summaries
         schedulerService.init(this);
 
-        // Set presence to "available" (online)
         await this.messageSender.setOnline();
         console.log('👁️ Presence set to: Online');
       }
     });
 
-    // ============================================================================
-    // ERROR HANDLING: Bad MAC / Decryption Errors
-    // ============================================================================
-
-    // Track failed decryption attempts per JID to avoid spam
     const decryptionFailures = new Map<string, number>();
     const MAX_DECRYPT_FAILURES = 3;
 
-    // Listen for Baileys internal errors (including Bad MAC)
     this.sock.ev.on('messaging-history.set', ({ isLatest }) => {
       if (isLatest) {
         console.log('✅ Message history synced');
-        // Clear decryption failure tracking on successful sync
         decryptionFailures.clear();
       }
     });
 
-    // Handle connection errors gracefully
     this.sock.ev.on('call', async (callEvents) => {
-      // Handle incoming calls (optional: auto-reject)
       for (const call of callEvents) {
         console.log(`📞 Incoming call from ${call.from}, status: ${call.status}`);
       }
     });
 
     this.sock.ev.on('messages.upsert', async ({ messages, type }) => {
-      // 🔍 DEBUG: Log every raw event to see if Baileys is firing
       console.log(`📨 Raw Event: ${type}, Count: ${messages.length}`);
 
       if (type !== 'notify') {
@@ -329,9 +278,9 @@ export class WhatsAppClient {
         const jid = msg.key.remoteJid;
         const fromMe = msg.key.fromMe;
         const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
-        const type = Object.keys(msg.message || {})[0];
+        const msgType = Object.keys(msg.message || {})[0];
 
-        console.log(`🔍 Inspecting Msg: JID=${jid}, Me=${fromMe}, Type=${type}, Text=${text ? `"${text.substring(0, 20)}..."` : 'N/A'}`);
+        console.log(`🔍 Inspecting Msg: JID=${jid}, Me=${fromMe}, Type=${msgType}, Text=${text ? `"${text.substring(0, 20)}..."` : 'N/A'}`);
 
         if (!jid) {
           console.log('⏩ Skipping: No JID');
@@ -343,20 +292,15 @@ export class WhatsAppClient {
           continue;
         }
 
-        // ============================================================================
-        // HANDLE DECRYPTION FAILURES (Bad MAC errors)
-        // ============================================================================
         if (!msg.message || Object.keys(msg.message).length === 0) {
-          console.warn(`⚠️  Message from ${jid} could not be decrypted (likely Bad MAC error)`);
+          console.warn(`⚠️ Message from ${jid} could not be decrypted (likely Bad MAC error)`);
 
-          // Track failures
           const failureCount = (decryptionFailures.get(jid) || 0) + 1;
           decryptionFailures.set(jid, failureCount);
 
           if (failureCount >= MAX_DECRYPT_FAILURES) {
             console.error(`❌ Too many decryption failures for ${jid}. Notifying user and clearing session.`);
 
-            // Send a helpful message to the user
             try {
               if (this.sock) {
                 await this.sock.sendMessage(jid, {
@@ -372,11 +316,8 @@ export class WhatsAppClient {
               console.error('Failed to send decryption error message:', e);
             }
 
-            // Reset counter to avoid spam
             decryptionFailures.delete(jid);
           }
-
-
         }
 
         try {
@@ -388,15 +329,8 @@ export class WhatsAppClient {
     });
   }
 
-  /**
-   * 1. Entry point for all incoming messages.
-   * Handles "Local Guard" logic, Contact Creation, and Buffering.
-   */
   private async handleIncomingMessage(msg: any) {
     let remoteJid = msg.key.remoteJid!;
-
-    // Normalize JID (unifies Desktop/Phone history and logs)
-    // e.g. Maps 128724850720810@lid -> 254745026933@s.whatsapp.net
     remoteJid = ownerService.normalizeJid(remoteJid);
 
     const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
@@ -405,8 +339,6 @@ export class WhatsAppClient {
     if (!text) return;
     if (remoteJid === 'status@broadcast') return;
 
-    // Filter: Only respond to personal/direct messages (DMs)
-    // Ignore group chats (@g.us) and broadcast channels (@broadcast, @newsletter)
     if (remoteJid.endsWith('@g.us')) {
       console.log(`⏩ Skipping: Group message from ${remoteJid}`);
       return;
@@ -417,8 +349,6 @@ export class WhatsAppClient {
       return;
     }
 
-    // Only process personal messages (ending with @s.whatsapp.net or @lid)
-    // NOTE: This includes WhatsApp Business accounts as they use the same suffix
     if (!remoteJid.endsWith('@s.whatsapp.net') && !remoteJid.endsWith('@lid')) {
       console.log(`⏩ Skipping: Unknown JID format ${remoteJid}`);
       return;
@@ -426,14 +356,10 @@ export class WhatsAppClient {
 
     console.log(`📥 Incoming DM: ${remoteJid} ("${text}")`);
 
-    // Check OWNER Logic
     if (ownerService.isOwner(remoteJid)) {
       console.log(`👑 Owner Message Detected from ${remoteJid}`);
-      // Add owner messages to buffer too - they will be processed as "Owner Commands" in processMessageBatch
-      // We don't want to skip them, we want the AI to handle them as commands
     }
 
-    // 1. Ensure Contact Exists (So we don't lose PushName info)
     let contact = await withRetry(async () => {
       return await db.select().from(contacts).where(eq(contacts.phone, remoteJid)).then(res => res[0]);
     });
@@ -453,7 +379,6 @@ export class WhatsAppClient {
       });
       contact = newContacts[0];
     } else {
-      // Update PushName if missing
       if (!contact.originalPushname && pushName) {
         await withRetry(async () => {
           await db.update(contacts).set({ originalPushname: pushName }).where(eq(contacts.phone, remoteJid));
@@ -461,51 +386,28 @@ export class WhatsAppClient {
       }
     }
 
-    // 2. Add to Buffer (Debounce)
     if (this.messageBuffer) {
       this.messageBuffer.add(remoteJid, text);
-      // EMERGENCY FIX: Disabled ConversationManager to stop duplicate snitch reports
-      // TODO: Re-enable after fixing rate limit loop
-      // if (this.conversationManager) {
-      //   this.conversationManager.touchConversation(remoteJid);
-      // }
     }
   }
 
-  /**
-   * 2. Process a Batch of Messages from MessageBuffer.
-   * This is where the AI actually runs (Costly).
-   */
   private async processMessageBatch(remoteJid: string, messages: string[]) {
-    // Combine messages into one context
     const fullText = messages.join('\n');
     const isOwner = ownerService.isOwner(remoteJid);
 
-    // 0. Short Circuit: Ignore simple acks (UNLESS it's the owner, who might be commanding)
-    // if (!isOwner) {
-    //   const ignoredPatterns = /^(ok|okay|k|lol|lmao|haha|thanks|thx|cool|👍|✅|yes|no|yeah|yup|nope)\.?$/i;
-    //   if (ignoredPatterns.test(fullText.trim())) {
-    //     console.log(`⏩ Short-circuit: Ignoring non-actionable message: "${fullText}"`);
-    //     return;
-    //   }
-    // }
-
     console.log(`🤖 AI Processing Batch for ${remoteJid} (Owner: ${isOwner}): "${fullText}"`);
 
-    // 1. Check Rate Limit FIRST - Queue if limited (Owner bypasses limits optional, but keeping for safety)
     if (rateLimitManager.isLimited() && !isOwner) {
       console.log(`⏸️ Rate limited. Queueing message from ${remoteJid} (silent mode)`);
       rateLimitManager.enqueue(remoteJid, messages);
       return;
     }
 
-    // 2. Get Contact
     const contact = await withRetry(async () => {
       return await db.select().from(contacts).where(eq(contacts.phone, remoteJid)).then(res => res[0]);
     });
     if (!contact) return;
 
-    // INTERCEPT: Marketing Onboarding
     try {
       const { marketingService } = await import('../services/marketing/marketingService');
       const onboardingResponse = await marketingService.handleOnboardingResponse(remoteJid, fullText);
@@ -513,26 +415,20 @@ export class WhatsAppClient {
       if (onboardingResponse) {
         console.log(`🎯 Marketing Onboarding Intercepted for ${remoteJid}`);
         await this.sendResponseAndLog(remoteJid, onboardingResponse, contact, [], fullText);
-        return; // Skip AI processing
+        return;
       }
     } catch (e) {
       console.error('Marketing onboarding check failed:', e);
     }
 
-    // Note: Conversation summaries will be sent after 20 min of inactivity via reportQueueService
-
-
-    // 3. Identity Validation Logic (Skip for owner)
     let systemPrompt: string | undefined = undefined;
 
     if (!contact.isVerified && !isOwner) {
-      // Force AI to verify identity
       const currentName = contact.name || contact.originalPushname || 'Unknown';
       systemPrompt = IdentityValidator.getIdentityPrompt(currentName);
       console.log(`🔒 Identity Verification Mode Active for ${remoteJid}`);
     }
 
-    // 4. Load History
     const historyLogs = await withRetry(async () => {
       return await db.select()
         .from(messageLogs)
@@ -543,7 +439,6 @@ export class WhatsAppClient {
 
     const history = historyLogs.reverse().map(m => `${m.role === 'agent' ? 'Me' : 'Them'}: ${m.content}`);
 
-    // Log User Input
     await withRetry(async () => {
       await db.insert(messageLogs).values({
         contactPhone: remoteJid,
@@ -554,13 +449,10 @@ export class WhatsAppClient {
       });
     });
 
-    // 5. Generate Response
-    // Inject OWNER Role into context
     const userRoleContext = isOwner ?
       `⚠️ IMPORTANT: You are chatting with the OWNER (Boss). You have full access to all tools including summaries, system status, and analytics. Obey all commands.` :
       `Contact Name: ${contact.name || "Unknown"}\nSummary: ${contact.summary}\nTrust Level: ${contact.trustLevel}`;
 
-    // Helper to remove nulls
     const sanitizeProfile = (profile: any) => {
       if (!profile) return undefined;
       const sanitized: any = {};
@@ -570,7 +462,6 @@ export class WhatsAppClient {
       return sanitized;
     };
 
-    // Fetch AI and User Profiles
     const currentAiProfile = await withRetry(async () => {
       return await db.select().from(aiProfile).limit(1).then(res => res[0]);
     });
@@ -594,7 +485,6 @@ export class WhatsAppClient {
       if (geminiResponse.type === 'tool_call') console.log(`🛠️ Initial Tool Call: ${geminiResponse.functionCall?.name}`);
     } catch (error: any) {
       if ((error.status === 429 || error.code === 429 || error.message === 'ALL_KEYS_EXHAUSTED')) {
-        // Queue message for later processing
         const { messageQueueService } = await import('../services/messageQueueService');
         await messageQueueService.enqueue(remoteJid, messages, isOwner ? 'owner' : 'normal');
         console.log(`⏸️ Rate limit hit. Queued ${messages.length} messages for ${remoteJid}. BackgroundWorker will retry.`);
@@ -605,17 +495,13 @@ export class WhatsAppClient {
       return;
     }
 
-
-
-    // 6. Handle Tool Calls
-    const MAX_TOOL_DEPTH = 5; // Increased from 2 to 5 to handle complex web searches
+    const MAX_TOOL_DEPTH = 5;
     let toolDepth = 0;
 
     while (geminiResponse.type === 'tool_call' && geminiResponse.functionCall && toolDepth < MAX_TOOL_DEPTH) {
       const { name, args } = geminiResponse.functionCall;
       console.log(`🛠️ Tool Execution: ${name}`);
 
-      // Execute Tool
       let toolResult;
       try {
         toolResult = await executeLocalTool(name, args, { contact, userProfile: currentUserProfile, client: this });
@@ -624,8 +510,6 @@ export class WhatsAppClient {
         toolResult = { error: "Tool failed: " + toolError.message };
       }
 
-      // INTERCEPT: Check for Image Generation Result
-      // Cast to any to avoid TS errors with strict typing of toolResult
       const resultData = (toolResult as any)?._data;
 
       if (resultData?.type === 'image_file' && resultData.path) {
@@ -643,14 +527,12 @@ export class WhatsAppClient {
             });
           }
 
-          // Cleanup temp file
           try {
             fs.unlinkSync(resultData.path);
           } catch (cleanupError) {
             console.warn('Failed to cleanup temp image file:', cleanupError);
           }
 
-          // Update result for AI context so it knows it succeeded
           toolResult = { result: "Image generated and sent successfully to user." };
         } catch (imgError: any) {
           console.error('Failed to send generated image:', imgError);
@@ -658,7 +540,6 @@ export class WhatsAppClient {
         }
       }
 
-      // Feed result back
       const toolOutputText = `[System: Tool '${name}' returned: ${JSON.stringify(toolResult)}]`;
 
       try {
@@ -676,9 +557,9 @@ export class WhatsAppClient {
           const retryAfter = error.errorDetails?.find((d: any) => d['@type']?.includes('RetryInfo'))?.retryDelay;
           const seconds = retryAfter ? parseInt(retryAfter) : 60;
           rateLimitManager.setRateLimited(seconds);
-          rateLimitManager.enqueue(remoteJid, messages); // Re-queue original messages
+          rateLimitManager.enqueue(remoteJid, messages);
           setTimeout(() => rateLimitManager.processQueue(this.processMessageBatch.bind(this)), seconds * 1000);
-          return; // Exit completely
+          return;
         }
         console.error('Gemini Tool Response Error:', error);
         if (isOwner && this.sock) await this.sock.sendMessage(remoteJid, { text: "⚠️ AI Error during tool: " + (error.message || "Unknown") });
@@ -687,12 +568,9 @@ export class WhatsAppClient {
       toolDepth++;
     }
 
-    // 7. Send Final Response
     if (geminiResponse.type === 'text' && geminiResponse.content) {
       await this.sendResponseAndLog(remoteJid, geminiResponse.content, contact, history, fullText);
     } else if (geminiResponse.type === 'tool_call') {
-      // Loop exited but AI still wants to call tools.
-      // FORCE A FINAL ANSWER based on what we have.
       console.warn(`⚠️ Max tool depth (${MAX_TOOL_DEPTH}) exceeded. Forcing final response from AI...`);
 
       try {
@@ -709,7 +587,6 @@ export class WhatsAppClient {
           console.log(`✅ Generated forced response after tool limit.`);
           await this.sendResponseAndLog(remoteJid, forcedResponse.content, contact, history, fullText);
         } else {
-          // Still trying to call tools? Give up.
           const errorMsg = "I found some information but I'm having trouble synthesizing it. Please try asking a more specific question.";
           await this.sendResponseAndLog(remoteJid, errorMsg, contact, history, fullText);
         }
@@ -721,26 +598,22 @@ export class WhatsAppClient {
     }
   }
 
-  // Helper to deduplicate sending logic
   private async sendResponseAndLog(remoteJid: string, responseText: string, contact: any, history: string[], userText: string) {
     console.log(`📤 Sending Response to ${remoteJid}: "${responseText.substring(0, 50)}..."`);
     let finalResponse = responseText;
     let shouldEndSession = false;
 
-    // Check for Closing Tag
     if (responseText.includes('#END_SESSION#')) {
       shouldEndSession = true;
       finalResponse = responseText.replace('#END_SESSION#', '').trim();
     }
 
-    // Send response
     if (this.messageSender) {
       await this.messageSender.sendText(remoteJid, finalResponse);
     } else {
       await this.sock!.sendMessage(remoteJid, { text: finalResponse });
     }
 
-    // Log Outgoing
     await withRetry(async () => {
       await db.insert(messageLogs).values({
         contactPhone: remoteJid,
@@ -751,7 +624,6 @@ export class WhatsAppClient {
       });
     });
 
-    // Manage Session
     if (this.conversationManager) {
       if (shouldEndSession) {
         console.log('🏁 Closing Intent Detected. Ending session.');
@@ -761,61 +633,59 @@ export class WhatsAppClient {
       }
     }
 
-    // Profiling (Skip for owner or if rate limited)
     if (!ownerService.isOwner(remoteJid) && !rateLimitManager.isLimited()) {
       this.runProfiling(history.concat(`Them: ${userText}`, `Me: ${finalResponse}`), contact);
     }
   }
 
-  /**
-   * Public method to send a text message to any JID.
-   * Useful for scheduled tasks and external triggers.
-   */
   public async sendText(jid: string, text: string): Promise<void> {
-    // Bypass MessageSender ("typing..." simulation) for direct API reliability
-    // attempts to reduce hangs during broadcasts
-    if (this.sock) {
-      try {
-        await this.sock.sendMessage(jid, { text });
-      } catch (error) {
-        console.error(`❌ Error sending text to ${jid}:`, error);
-      }
-    } else {
+    if (!this.sock) {
       console.warn('⚠️ Cannot send message: Client not initialized');
+      return;
+    }
+
+    try {
+      await this.sock.sendMessage(jid, { text });
+      console.log(`✅ Text sent to ${jid}`);
+    } catch (error) {
+      console.error(`❌ Error sending text to ${jid}:`, error);
+      throw error;
     }
   }
 
   public async sendImage(jid: string, image: Buffer, caption?: string): Promise<void> {
-    if (this.sock) {
-      console.log(`📤 Sending image to ${jid} (${image.length} bytes)...`);
-      try {
-        // Race with timeout to prevent hanging (increased to 30s)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Send image timeout (30s)')), 30000)
-        );
-
-        await Promise.race([
-          this.sock.sendMessage(jid, {
-            image,
-            caption,
-            mimetype: 'image/jpeg'
-          }),
-          timeoutPromise
-        ]);
-        console.log(`✅ Image sent to ${jid}`);
-      } catch (error) {
-        console.error(`❌ Error sending image to ${jid}:`, error);
-        throw error;
-      }
-    } else {
+    if (!this.sock) {
       console.warn('⚠️ Cannot send image: Client not initialized');
+      return;
+    }
+
+    console.log(`📤 Sending image to ${jid} (${image.length} bytes)...`);
+
+    try {
+      // Shorter timeout and simpler approach
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Send image timeout (30s)')), 30000)
+      );
+
+      await Promise.race([
+        this.sock.sendMessage(jid, {
+          image,
+          caption,
+          mimetype: 'image/jpeg'
+        }),
+        timeoutPromise
+      ]);
+
+      console.log(`✅ Image sent to ${jid}`);
+    } catch (error) {
+      console.error(`❌ Error sending image to ${jid}:`, error);
+      throw error;
     }
   }
 
   private async runProfiling(history: string[], contact: any) {
-    if (rateLimitManager.isLimited()) return; // Double check
+    if (rateLimitManager.isLimited()) return;
 
-    // Add delay to avoid hitting rate limit immediately after response (Gemini free tier: 2 RPM)
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     const profileUpdate = await geminiService.updateProfile(history, contact.summary || "");
@@ -832,14 +702,6 @@ export class WhatsAppClient {
           })
           .where(eq(contacts.phone, contact.phone));
       });
-
-      // 6. Alert Owner if Action Required - DISABLED (user wants summaries only, no alerts)
-      // if (profileUpdate.action_required && config.ownerPhone) {
-      //   const alertMsg = `*🛎️ ACTION REQUIRED*\n\nContact: ${profileUpdate.name || contact.phone}\nReason: ${profileUpdate.summary}\n\nReview chat to decide.`;
-      //   const ownerJid = config.ownerPhone.includes('@s.whatsapp.net') ? config.ownerPhone : config.ownerPhone + '@s.whatsapp.net';
-      //   console.log(`🛎️ Sending Profile Alert to Owner (${ownerJid})...`);
-      //   await this.sock!.sendMessage(ownerJid, { text: alertMsg });
-      // }
     }
   }
 }
