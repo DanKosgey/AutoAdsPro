@@ -369,6 +369,56 @@
                 </div>
             </div>
 
+            <!-- Communities Page -->
+            <div class="page" id="communities-page">
+                <header class="page-header">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                            </svg>
+                        </button>
+                        <h2>Communities</h2>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div class="search-box">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <input type="text" placeholder="Search groups..." id="communities-search"
+                                onkeyup="filterCommunities()">
+                        </div>
+                        <button class="btn-refresh" onclick="loadCommunities()" aria-label="Refresh Communities">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <p class="stat-label">Total Groups</p>
+                        <h3 class="stat-value" id="comm-total-count">0</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-label">Total Reach</p>
+                        <h3 class="stat-value" id="comm-total-reach">0</h3>
+                        <span class="stat-change positive">Potential Audience</span>
+                    </div>
+                </div>
+
+                <div class="marketing-list-section">
+                    <div id="communities-list" class="marketing-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Settings Page -->
             <div class="page" id="settings-page">
                 <header class="page-header">

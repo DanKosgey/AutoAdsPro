@@ -542,26 +542,43 @@ function getTrustClass(level) {
 
 // Communities
 async function loadCommunities() {
+    console.log('🔄 loadCommunities() called');
     const communitiesList = document.getElementById('communities-list');
     const totalCountEl = document.getElementById('comm-total-count');
     const totalReachEl = document.getElementById('comm-total-reach');
 
+    console.log('DOM Elements found:', {
+        list: !!communitiesList,
+        count: !!totalCountEl,
+        reach: !!totalReachEl
+    });
+
+    if (!communitiesList) {
+        console.error('❌ Critical: communities-list element not found in DOM');
+        return;
+    }
+
     try {
+        console.log('📡 Fetching communities from API...');
         const response = await fetch(`${API_BASE}/api/marketing/groups`);
         const data = await response.json();
+        console.log('📥 API Response:', data);
 
         if (!data.success || !data.groups || data.groups.length === 0) {
+            console.warn('⚠️ No groups found in response');
             communitiesList.innerHTML = `
                 <p class="empty-text">No WhatsApp groups found. Make sure you're connected.</p>
             `;
-            totalCountEl.textContent = '0';
-            totalReachEl.textContent = '0';
+            if (totalCountEl) totalCountEl.textContent = '0';
+            if (totalReachEl) totalReachEl.textContent = '0';
             return;
         }
 
         const groups = data.groups;
-        totalCountEl.textContent = groups.length;
-        totalReachEl.textContent = groups.reduce((sum, g) => sum + g.participants, 0);
+        console.log(`✅ Loaded ${groups.length} groups`);
+
+        if (totalCountEl) totalCountEl.textContent = groups.length;
+        if (totalReachEl) totalReachEl.textContent = groups.reduce((sum, g) => sum + (g.participants || 0), 0);
 
         communitiesList.innerHTML = groups.map(group => `
             <div class="marketing-list-item">
@@ -569,15 +586,17 @@ async function loadCommunities() {
                     <div class="marketing-list-item-icon">👥</div>
                     <div class="marketing-list-item-info">
                         <h4>${group.name}</h4>
-                        <p>${group.participants} members</p>
+                        <p>${group.participants || 0} members</p>
                     </div>
                 </div>
             </div>
         `).join('');
+        console.log('🎨 Rendered groups list');
+
     } catch (error) {
-        console.error('Failed to load communities:', error);
+        console.error('❌ Failed to load communities:', error);
         communitiesList.innerHTML = `
-            <p class="empty-text" style="color: var(--danger);">Failed to load groups</p>
+            <p class="empty-text" style="color: var(--danger);">Failed to load groups: ${error.message}</p>
         `;
     }
 }
