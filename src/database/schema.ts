@@ -233,6 +233,13 @@ export const marketingCampaigns = pgTable('marketing_campaigns', {
     // Target Groups (JSON array of JIDs) - Updated 2026-01-30
     targetGroups: jsonb('target_groups'),
 
+    // Business Context (Overrides global profile)
+    productInfo: text('product_info'),
+    targetAudience: text('target_audience'),
+    uniqueSellingPoint: text('unique_selling_point'),
+    brandVoice: text('brand_voice'),
+    visualStyle: text('visual_style').default('minimalist'),
+
     settings: jsonb('settings'), // Flexible config
     createdAt: timestamp('created_at').defaultNow(),
 });

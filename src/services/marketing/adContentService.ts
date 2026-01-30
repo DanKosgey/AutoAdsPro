@@ -92,15 +92,21 @@ export class AdContentService {
      * Generate complete ad content (Text + Image URL/Path)
      */
     public async generateAd(campaignId: number, styleHint: string = 'balanced'): Promise<{ text: string, imagePath?: string }> {
-        // 1. Fetch Business Profile
-        const profile = await db.query.businessProfile.findFirst();
-        if (!profile) throw new Error("No business profile found. Please run onboarding first.");
-
-        // 2. Fetch Campaign to get start date
+        // 1. Fetch Campaign
         const campaign = await db.query.marketingCampaigns.findFirst({
             where: eq(marketingCampaigns.id, campaignId)
         });
         if (!campaign) throw new Error("Campaign not found.");
+
+        // 2. Determine Business Profile (Campaign specific OR Global Fallback)
+        let profile: any = campaign;
+
+        // If campaign lacks specific product info, fall back to global business profile
+        if (!campaign.productInfo) {
+            const globalProfile = await db.query.businessProfile.findFirst();
+            if (!globalProfile) throw new Error("No business profile found. Please run onboarding or configure campaign details.");
+            profile = globalProfile;
+        }
 
         // 3. Calculate rotated style and framework
         const style = this.getRotatedStyle(campaign.startDate!);

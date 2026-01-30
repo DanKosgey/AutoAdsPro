@@ -471,8 +471,15 @@ app.put('/api/marketing/profile', async (req, res) => {
 app.post('/api/marketing/campaign', async (req, res) => {
     try {
         const { marketingService } = await import('./services/marketing/marketingService');
-        const { name, morningTime, afternoonTime, eveningTime } = req.body;
-        const result = await marketingService.createCampaign(name, morningTime, afternoonTime, eveningTime);
+        const { name, morningTime, afternoonTime, eveningTime, productInfo, targetAudience, uniqueSellingPoint, brandVoice } = req.body;
+
+        const result = await marketingService.createCampaign(
+            name,
+            morningTime,
+            afternoonTime,
+            eveningTime,
+            productInfo ? { productInfo, targetAudience, uniqueSellingPoint, brandVoice } : undefined
+        );
         res.json({ success: true, message: result });
     } catch (error) {
         console.error('Failed to create campaign:', error);

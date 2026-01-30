@@ -1196,6 +1196,23 @@ async function createCampaign() {
     const afternoonTime = document.getElementById('marketing-afternoon-time').value || '13:00';
     const eveningTime = document.getElementById('marketing-evening-time').value || '19:00';
 
+    // Get Custom Profile
+    const useCustom = document.getElementById('campaign-custom-profile-check').checked;
+    let businessContext = {};
+    if (useCustom) {
+        businessContext = {
+            productInfo: document.getElementById('camp-product').value,
+            targetAudience: document.getElementById('camp-audience').value,
+            uniqueSellingPoint: document.getElementById('camp-usp').value,
+            brandVoice: document.getElementById('camp-voice').value
+        };
+        if (!businessContext.productInfo) {
+            statusMsg.textContent = 'Please enter Product Info for custom profile';
+            statusMsg.style.color = 'var(--danger)';
+            return;
+        }
+    }
+
     btn.textContent = 'Creating...';
     btn.disabled = true;
     statusMsg.textContent = 'Initializing campaign...';
@@ -1389,3 +1406,8 @@ async function refreshCampaigns() {
 // Make functions global
 window.switchMarketingTab = switchMarketingTab;
 window.refreshCampaigns = refreshCampaigns;
+function toggleCampaignProfile(checkbox) {
+    const container = document.getElementById('campaign-custom-profile');
+    if(container) container.style.display = checkbox.checked ? 'block' : 'none';
+}
+

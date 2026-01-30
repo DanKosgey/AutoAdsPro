@@ -96,9 +96,17 @@ export class MarketingService {
         name: string = "AutoAds Weekly",
         morningTime: string = "07:00",
         afternoonTime: string = "13:00",
-        eveningTime: string = "19:00"
+        eveningTime: string = "19:00",
+        businessContext?: {
+            productInfo?: string,
+            targetAudience?: string,
+            uniqueSellingPoint?: string,
+            brandVoice?: string
+        }
     ): Promise<string> {
-        if (!await this.hasProfile()) return "❌ Please complete the onboarding first (`setup marketing`)."
+        if (!await this.hasProfile() && (!businessContext || !businessContext.productInfo)) {
+            return "❌ Please complete the onboarding first or provide campaign details."
+        }
 
         // Create Campaign Entry
         const [campaign] = await db.insert(marketingCampaigns).values({
@@ -107,7 +115,12 @@ export class MarketingService {
             startDate: new Date(),
             morningTime,
             afternoonTime,
-            eveningTime
+            eveningTime,
+            // Save Business Context (if provided)
+            productInfo: businessContext?.productInfo,
+            targetAudience: businessContext?.targetAudience,
+            uniqueSellingPoint: businessContext?.uniqueSellingPoint,
+            brandVoice: businessContext?.brandVoice
         }).returning();
 
         return `✅ Campaign '${name}' created! ID: ${campaign.id}. Use 'view schedule' to see upcoming posts.`;
