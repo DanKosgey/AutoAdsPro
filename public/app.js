@@ -133,6 +133,9 @@ function loadPageData(page) {
         case 'marketing':
             loadMarketing();
             break;
+        case 'communities':
+            loadCommunities();
+            break;
         case 'settings':
             loadSettings();
             break;
@@ -537,7 +540,60 @@ function getTrustClass(level) {
     return 'low';
 }
 
+// Communities
+async function loadCommunities() {
+    const communitiesList = document.getElementById('communities-list');
+    const totalCountEl = document.getElementById('comm-total-count');
+    const totalReachEl = document.getElementById('comm-total-reach');
+
+    try {
+        const response = await fetch(`${API_BASE}/api/marketing/groups`);
+        const data = await response.json();
+
+        if (!data.success || !data.groups || data.groups.length === 0) {
+            communitiesList.innerHTML = `
+                <p class="empty-text">No WhatsApp groups found. Make sure you're connected.</p>
+            `;
+            totalCountEl.textContent = '0';
+            totalReachEl.textContent = '0';
+            return;
+        }
+
+        const groups = data.groups;
+        totalCountEl.textContent = groups.length;
+        totalReachEl.textContent = groups.reduce((sum, g) => sum + g.participants, 0);
+
+        communitiesList.innerHTML = groups.map(group => `
+            <div class="marketing-list-item">
+                <div class="marketing-list-item-header">
+                    <div class="marketing-list-item-icon">👥</div>
+                    <div class="marketing-list-item-info">
+                        <h4>${group.name}</h4>
+                        <p>${group.participants} members</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load communities:', error);
+        communitiesList.innerHTML = `
+            <p class="empty-text" style="color: var(--danger);">Failed to load groups</p>
+        `;
+    }
+}
+
+function filterCommunities() {
+    const query = document.getElementById('communities-search').value.toLowerCase();
+    const items = document.querySelectorAll('#communities-list .marketing-list-item');
+
+    items.forEach(item => {
+        const name = item.querySelector('h4').textContent.toLowerCase();
+        item.style.display = name.includes(query) ? 'block' : 'none';
+    });
+}
+
 // Settings
+
 function loadSettings() {
     const statusEl = document.getElementById('settings-status');
     const phoneEl = document.getElementById('settings-phone');
