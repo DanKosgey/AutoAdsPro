@@ -5,7 +5,7 @@ import { config } from './config/env';
 import { WhatsAppClient } from './core/whatsapp';
 import { TelegramClient } from './core/telegram';
 import { db, testConnection } from './database';
-import { contacts, messageLogs, authCredentials, aiProfile, userProfile, businessProfile } from './database/schema';
+import { contacts, messageLogs, authCredentials, aiProfile, userProfile, businessProfile, marketingCampaigns } from './database/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { sessionManager } from './services/sessionManager';
 
@@ -488,6 +488,18 @@ app.get('/api/marketing/groups', async (req, res) => {
 
         const groupJids = await whatsappClient.getAllGroups();
 
+        // Get active campaign to check selected groups
+        const activeCampaign = await db.query.marketingCampaigns.findFirst({
+            where: eq(marketingCampaigns.status, 'active')
+        });
+
+        const selectedGroups = activeCampaign?.targetGroups as string[] || [];
+        // If no targetGroups defined (legacy), defaulting to ALL being selected is safer logic-wise for now, 
+        // OR we can make the UI handle it. 
+        // Let's assume: empty targetGroups = broadcast to all (legacy behavior) 
+        // BUT for UI, if it's null, we might want to check all by default.
+        const isLegacy = !activeCampaign?.targetGroups;
+
         // Fetch group metadata for each group
         const groups = await Promise.all(groupJids.map(async (jid: string) => {
             try {
@@ -495,14 +507,16 @@ app.get('/api/marketing/groups', async (req, res) => {
                 return {
                     id: jid,
                     name: metadata?.subject || 'Unknown Group',
-                    participants: metadata?.participants?.length || 0
+                    participants: metadata?.participants?.length || 0,
+                    selected: isLegacy ? true : selectedGroups.includes(jid)
                 };
             } catch (error) {
                 console.error(`Failed to fetch metadata for ${jid}:`, error);
                 return {
                     id: jid,
                     name: 'Unknown Group',
-                    participants: 0
+                    participants: 0,
+                    selected: isLegacy ? true : selectedGroups.includes(jid)
                 };
             }
         }));
@@ -512,6 +526,43 @@ app.get('/api/marketing/groups', async (req, res) => {
         console.error('Failed to fetch groups:', error);
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
+});
+
+app.put('/api/marketing/campaign/targets', async (req, res) => {
+    try {
+        const { targetGroups } = req.body;
+
+        if (!Array.isArray(targetGroups)) {
+            return res.status(400).json({ success: false, error: 'targetGroups must be an array' });
+        }
+
+        // Update active campaign
+        const activeCampaign = await db.query.marketingCampaigns.findFirst({
+            where: eq(marketingCampaigns.status, 'active')
+        });
+
+        if (!activeCampaign) {
+            return res.status(404).json({ success: false, error: 'No active campaign found' });
+        }
+
+        await db.update(marketingCampaigns)
+            .set({ targetGroups })
+            .where(eq(marketingCampaigns.id, activeCampaign.id));
+
+        res.json({ success: true, message: 'Target groups updated' });
+    } catch (error) {
+        console.error('Failed to update target groups:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// Catch-all route: Serve index.html for all non-API routes (SPA support)
+app.get('*', (req, res) => {
+    // Don't intercept API routes
+    if (req.path.startsWith('/api/') || req.path.startsWith('/health') || req.path.startsWith('/ready')) {
+        return res.status(404).json({ error: 'Not Found' });
+    }
+    res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 const start = async () => {
