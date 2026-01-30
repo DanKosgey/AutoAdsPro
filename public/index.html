@@ -88,6 +88,15 @@
                     </svg>
                     <span>Marketing</span>
                 </a>
+                <a href="#" class="nav-item" data-page="communities">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Communities</span>
+                </a>
                 <a href="#" class="nav-item" data-page="ai-profile">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M13 7H7v6h6V7z" />
@@ -1120,568 +1129,616 @@
                 </div>
 
             </div>
-
-            <!-- AI Profile Page -->
-            <div class="page" id="ai-profile-page">
-                <header class="page-header">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                            </svg>
-                        </button>
-                        <h2>🤖 AI Agent Profile</h2>
-                    </div>
-                    <button class="btn-primary" id="save-ai-profile">Save Changes</button>
-                </header>
-
-                <div class="profile-container">
-                    <div class="profile-section">
-                        <h3>Agent Identity</h3>
-                        <div class="form-group">
-                            <label>Agent Name</label>
-                            <input type="text" id="agent-name" placeholder="Representative">
-                            <small>The name your AI agent will use</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Agent Role</label>
-                            <input type="text" id="agent-role" placeholder="Personal Assistant">
-                            <small>What role does your agent play?</small>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
-                        <h3>Personality & Style</h3>
-                        <div class="form-group">
-                            <label>Personality Traits</label>
-                            <textarea id="personality-traits" rows="3"
-                                placeholder="Professional, helpful, and efficient"></textarea>
-                            <small>Describe how the AI should behave</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Communication Style</label>
-                            <textarea id="communication-style" rows="2"
-                                placeholder="Friendly yet professional"></textarea>
-                            <small>How should the AI communicate?</small>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
-                        <h3>Custom System Prompt</h3>
-                        <div class="form-group">
-                            <label>System Prompt Override (Advanced)</label>
-                            <textarea id="system-prompt" rows="6"
-                                placeholder="Leave empty to use default prompt..."></textarea>
-                            <small>⚠️ Advanced: Override the default AI instructions</small>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
-                        <h3>Behavior Settings</h3>
-                        <div class="form-group">
-                            <label>Response Length</label>
-                            <select id="response-length">
-                                <option value="short">Short & Concise</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="long">Detailed & Comprehensive</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Formality Level: <span id="formality-value">5</span>/10</label>
-                            <input type="range" id="formality-level" min="1" max="10" value="5">
-                            <div class="range-labels">
-                                <span>Casual</span>
-                                <span>Formal</span>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="use-emojis" checked>
-                                <span>Use Emojis in Responses</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+            <!-- Marketing Tab -->
+            <div class="marketing-tab-content active" id="marketing-tab-campaigns">
+                <!-- Campaign List (Standard) -->
+                <!-- ... content handled by app.js ... -->
             </div>
 
-            <!-- User Profile Page -->
-            <div class="page" id="user-profile-page">
-                <header class="page-header">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                            </svg>
-                        </button>
-                        <h2>👤 Your Profile</h2>
-                    </div>
-                    <button class="btn-primary" id="save-user-profile">Save Changes</button>
-                </header>
+            <!-- (Other tabs hidden) -->
+    </div>
+    </div>
+    </div>
 
-                <div class="profile-container">
-                    <div class="profile-section">
-                        <h3>Personal Information</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Full Name</label>
-                                <input type="text" id="user-full-name" placeholder="John Doe">
-                            </div>
-                            <div class="form-group">
-                                <label>Preferred Name</label>
-                                <input type="text" id="user-preferred-name" placeholder="John">
-                                <small>How should the AI address you?</small>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Title/Position</label>
-                                <input type="text" id="user-title" placeholder="CEO">
-                            </div>
-                            <div class="form-group">
-                                <label>Company</label>
-                                <input type="text" id="user-company" placeholder="Acme Corp">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
-                        <h3>Contact Information</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="user-email" placeholder="john@acme.com">
-                            </div>
-                            <div class="form-group">
-                                <label>Phone</label>
-                                <input type="tel" id="user-phone" placeholder="+1234567890">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Location</label>
-                                <input type="text" id="user-location" placeholder="New York, USA">
-                            </div>
-                            <div class="form-group">
-                                <label>Timezone</label>
-                                <div class="timezone-picker-wrapper">
-                                    <input type="text" id="timezone-search" placeholder="Search for a city..."
-                                        autocomplete="off">
-                                    <input type="hidden" id="user-timezone">
-                                    <div class="timezone-dropdown" id="timezone-dropdown">
-                                        <div class="timezone-dropdown-header">
-                                            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                            <span>Select your city</span>
-                                        </div>
-                                        <div class="timezone-list" id="timezone-list">
-                                            <!-- Populated by JavaScript -->
-                                        </div>
-                                    </div>
-                                </div>
-                                <small class="timezone-display" id="timezone-display"></small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
-                        <h3>Professional Context</h3>
-                        <div class="form-group">
-                            <label>Industry</label>
-                            <input type="text" id="user-industry" placeholder="Technology">
-                        </div>
-                        <div class="form-group">
-                            <label>Role Description</label>
-                            <textarea id="user-role" rows="3" placeholder="Describe what you do..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Key Responsibilities</label>
-                            <textarea id="user-responsibilities" rows="3"
-                                placeholder="What are your main responsibilities?"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="profile-section">
-                        <h3>Availability & Preferences</h3>
-                        <div class="form-group">
-                            <label>Working Hours</label>
-                            <input type="text" id="user-working-hours" placeholder="9 AM - 5 PM EST">
-                        </div>
-                        <div class="form-group">
-                            <label>Priorities</label>
-                            <textarea id="user-priorities" rows="2" placeholder="What matters most to you?"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Background Info (for AI context)</label>
-                            <textarea id="user-background" rows="4"
-                                placeholder="Any additional context that helps the AI understand you better..."></textarea>
-                            <small>This information helps the AI provide more personalized responses</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Marketing Page (Redesigned) -->
-            <div class="page" id="marketing-page">
-                <!-- Dashboard Header -->
-                <header class="marketing-header">
-                    <div class="header-left">
-                        <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                            </svg>
-                        </button>
-                        <div>
-                            <h2>Marketing Command Center</h2>
-                            <p class="subtitle">Manage automated campaigns & audience targeting</p>
-                        </div>
-                    </div>
-                    <div class="header-right">
-                        <button class="btn-text" onclick="openAudienceManager()">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                            </svg>
-                            Audience
-                        </button>
-                        <button class="btn-primary" onclick="openCampaignWizard()">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                            </svg>
-                            New Campaign
-                        </button>
-                    </div>
-                </header>
-
-                <!-- Dashboard Stats Grid -->
-                <div class="marketing-dashboard-grid">
-                    <div class="marketing-stat-card glass-panel">
-                        <div class="stat-icon-glow purple">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
-                            </svg>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Active Campaigns</h3>
-                            <p class="stat-number" id="mkt-active-count">0</p>
-                            <span class="stat-trend trend-neutral">--</span>
-                        </div>
-                    </div>
-
-                    <div class="marketing-stat-card glass-panel">
-                        <div class="stat-icon-glow pink">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                            </svg>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Audience Reach</h3>
-                            <p class="stat-number" id="mkt-audience-reach">0</p>
-                            <span class="stat-trend trend-up">Potential</span>
-                        </div>
-                    </div>
-
-                    <div class="marketing-stat-card glass-panel">
-                        <div class="stat-icon-glow blue">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                            </svg>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Next Post</h3>
-                            <p class="stat-number minute-text" id="mkt-next-slot">--:--</p>
-                            <span class="stat-trend">Upcoming</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Layout -->
-                <div class="marketing-layout">
-                    <!-- Left: Campaigns Grid -->
-                    <div class="layout-main">
-                        <div class="section-title">
-                            <h3>Recent Campaigns</h3>
-                            <button class="btn-icon-sm" onclick="refreshCampaigns()" title="Refresh List">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div id="campaigns-grid" class="campaigns-grid-modern">
-                            <!-- Populated via JS -->
-                            <div class="empty-state-card">
-                                <p>Loading your campaigns...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right: Brand & Quick Actions -->
-                    <aside class="layout-sidebar">
-                        <!-- Brand Identity Card -->
-                        <div class="brand-asset-card glass-panel">
-                            <div class="card-header">
-                                <h3>Brand Identity</h3>
-                                <button class="btn-xs" onclick="openBrandProfile()">Edit</button>
-                            </div>
-                            <div class="brand-voice-preview" id="brand-voice-display">
-                                <span class="badge-voice">Professional</span>
-                            </div>
-                            <p class="brand-desc-preview" id="brand-desc-display">
-                                No product info set.
-                            </p>
-                            <div class="brand-progress">
-                                <label>Profile Strength</label>
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" id="brand-strength" style="width: 20%;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <div class="actions-card glass-panel">
-                            <h3>Quick Actions</h3>
-                            <div class="action-list">
-                                <button class="action-item" onclick="openAudienceManager()">
-                                    <div class="icon-box p-green">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                            <path
-                                                d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                                        </svg>
-                                    </div>
-                                    <span>Manage Audience</span>
-                                </button>
-                                <button class="action-item" onclick="triggerTestAd()">
-                                    <div class="icon-box p-yellow">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                            <path
-                                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                        </svg>
-                                    </div>
-                                    <span>Test Ad Generation</span>
-                                </button>
-                            </div>
-                        </div>
-                    </aside>
-                </div>
-
-                <!-- OVERLAYS / MODALS -->
-
-                <!-- 1. Campaign Wizard Overlay -->
-                <div id="campaign-wizard-overlay" class="modal-overlay">
-                    <div class="glass-modal large-modal">
-                        <div class="modal-header">
-                            <h2>Create New Campaign</h2>
-                            <button class="btn-close" onclick="closeCampaignWizard()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- Step Indicator -->
-                            <div class="step-indicator">
-                                <div class="step active">
-                                    <div class="step-number">1</div>
-                                    <div class="step-label">Details</div>
-                                </div>
-                                <div class="step">
-                                    <div class="step-number">2</div>
-                                    <div class="step-label">Schedule</div>
-                                </div>
-                                <div class="step">
-                                    <div class="step-number">3</div>
-                                    <div class="step-label">Review</div>
-                                </div>
-                            </div>
-
-                            <input type="hidden" id="mini-camp-id">
-                            <div class="form-group">
-                                <label>Campaign Name</label>
-                                <input type="text" id="mini-camp-name" placeholder="e.g. Summer Sale"
-                                    class="form-input">
-                            </div>
-
-                            <div class="form-row-2">
-                                <div class="form-group">
-                                    <label>Morning</label>
-                                    <input type="time" id="mini-time-m" value="09:00" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label>Afternoon</label>
-                                    <input type="time" id="mini-time-a" value="14:00" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label>Evening</label>
-                                    <input type="time" id="mini-time-e" value="19:00" class="form-input">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="wizard-container">
-                            <div class="wizard-steps-nav">
-                                <div class="step-nav-item active" data-step="1">1. Details</div>
-                                <div class="step-nav-item" data-step="2">2. Timing</div>
-                                <div class="step-nav-item" data-step="3">3. Audience</div>
-                                <div class="step-nav-item" data-step="4">4. Review</div>
-                            </div>
-
-                            <div class="wizard-content">
-                                <!-- Step 1: Basics -->
-                                <div class="wizard-step active" id="wizard-step-1">
-                                    <div class="form-group">
-                                        <label>Campaign Name</label>
-                                        <input type="text" id="wiz-name" placeholder="e.g. Weekly Flash Sale">
-                                    </div>
-                                    <div class="form-group checkbox-group">
-                                        <input type="checkbox" id="wiz-use-custom" onchange="toggleWizCustom(this)">
-                                        <label for="wiz-use-custom">Overrride Global Business Profile</label>
-                                    </div>
-                                    <div id="wiz-custom-profile" class="slide-down-panel" style="display:none;">
-                                        <div class="form-group">
-                                            <input type="text" id="wiz-product" placeholder="Specific Product Info">
-                                        </div>
-                                        <div class="form-group">
-                                            <input type="text" id="wiz-audience" placeholder="Specific Audience">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Step 2: Time -->
-                                <div class="wizard-step" id="wizard-step-2">
-                                    <div class="time-grid">
-                                        <div class="time-input">
-                                            <span>Morning</span>
-                                            <input type="time" id="wiz-time-morning" value="07:00">
-                                        </div>
-                                        <div class="time-input">
-                                            <span>Afternoon</span>
-                                            <input type="time" id="wiz-time-afternoon" value="13:00">
-                                        </div>
-                                        <div class="time-input">
-                                            <span>Evening</span>
-                                            <input type="time" id="wiz-time-evening" value="19:00">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Step 3: Audience (Target Groups) -->
-                                <div class="wizard-step" id="wizard-step-3">
-                                    <div id="wiz-groups-list" class="selectable-list">
-                                        <p>Loading groups...</p>
-                                    </div>
-                                </div>
-
-                                <!-- Step 4: Review -->
-                                <div class="wizard-step" id="wizard-step-4">
-                                    <div class="review-card">
-                                        <h3 id="review-name">Campaign Name</h3>
-                                        <p id="review-schedule">Schedule: 7am, 1pm, 7pm</p>
-                                        <p id="review-groups">Targeting: All Groups</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button class="btn-text" id="wiz-prev-btn" onclick="wizardBack()"
-                                    style="visibility:hidden">Back</button>
-                                <button class="btn-primary" id="wiz-next-btn" onclick="wizardNext()">Next</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Audience Manager Overlay -->
-                <div id="audience-manager-overlay" class="modal-overlay">
-                    <div class="glass-modal">
-                        <div class="modal-header">
-                            <h2>Audience Groups</h2>
-                            <button class="btn-close" onclick="closeAudienceManager()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="toolbar">
-                                <button class="btn-secondary" onclick="refreshGroups()">Refresh WhatsApp Groups</button>
-                            </div>
-                            <div id="audience-list-full" class="full-list-view">
-                                <!-- Full list populated here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. Brand Profile Modal -->
-                <div id="brand-profile-modal" class="modal-overlay">
-                    <div class="glass-modal medium-modal">
-                        <div class="modal-header">
-                            <h2>Edit Global Brand Profile</h2>
-                            <button class="btn-close" onclick="closeBrandProfile()">×</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label>Product/Service</label>
-                                <textarea id="modal-brand-product" rows="3"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Target Audience</label>
-                                <textarea id="modal-brand-audience" rows="2"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>USP</label>
-                                <textarea id="modal-brand-usp" rows="2"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Brand Voice</label>
-                                <select id="modal-brand-voice">
-                                    <option value="professional">Professional</option>
-                                    <option value="friendly">Friendly</option>
-                                    <option value="luxury">Luxury</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-primary" onclick="saveBrandProfileFromModal()">Save Profile</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-        <!-- Mobile Navigation -->
-        <nav class="mobile-nav">
-            <a href="#" class="mobile-nav-item active" data-page="dashboard">
-                <div class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+    <!-- Communities Page (New) -->
+    <div class="page" id="communities-page">
+        <header class="page-header">
+            <h2>Communities</h2>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <input type="text" id="communities-search" placeholder="Search groups..."
+                        onkeyup="filterCommunities()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </div>
-                <span>Home</span>
-            </a>
-            <a href="#" class="mobile-nav-item" data-page="chats">
-                <div class="nav-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+                <button class="btn-refresh" onclick="loadCommunities()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                            clip-rule="evenodd" />
                     </svg>
-                    <span class="mobile-badge" id="mobile-chat-count" style="display: none;">0</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            <div class="communities-stats-row">
+                <div class="stat-card mini">
+                    <div class="stat-label">Total Groups</div>
+                    <div class="stat-value" id="comm-total-count">0</div>
                 </div>
-                <span>Chats</span>
-            </a>
-            <a href="#" class="mobile-nav-item" data-page="contacts">
-                <div class="nav-icon">
+                <div class="stat-card mini">
+                    <div class="stat-label">Total Reach</div>
+                    <div class="stat-value" id="comm-total-reach">0</div>
+                </div>
+            </div>
+
+            <div id="communities-list" class="marketing-list-grid">
+                <p class="empty-text">Loading communities...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Profile Page -->
+    <div class="page" id="ai-profile-page">
+        <header class="page-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                    </svg>
+                </button>
+                <h2>🤖 AI Agent Profile</h2>
+            </div>
+            <button class="btn-primary" id="save-ai-profile">Save Changes</button>
+        </header>
+
+        <div class="profile-container">
+            <div class="profile-section">
+                <h3>Agent Identity</h3>
+                <div class="form-group">
+                    <label>Agent Name</label>
+                    <input type="text" id="agent-name" placeholder="Representative">
+                    <small>The name your AI agent will use</small>
+                </div>
+                <div class="form-group">
+                    <label>Agent Role</label>
+                    <input type="text" id="agent-role" placeholder="Personal Assistant">
+                    <small>What role does your agent play?</small>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Personality & Style</h3>
+                <div class="form-group">
+                    <label>Personality Traits</label>
+                    <textarea id="personality-traits" rows="3"
+                        placeholder="Professional, helpful, and efficient"></textarea>
+                    <small>Describe how the AI should behave</small>
+                </div>
+                <div class="form-group">
+                    <label>Communication Style</label>
+                    <textarea id="communication-style" rows="2" placeholder="Friendly yet professional"></textarea>
+                    <small>How should the AI communicate?</small>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Custom System Prompt</h3>
+                <div class="form-group">
+                    <label>System Prompt Override (Advanced)</label>
+                    <textarea id="system-prompt" rows="6" placeholder="Leave empty to use default prompt..."></textarea>
+                    <small>⚠️ Advanced: Override the default AI instructions</small>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Behavior Settings</h3>
+                <div class="form-group">
+                    <label>Response Length</label>
+                    <select id="response-length">
+                        <option value="short">Short & Concise</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="long">Detailed & Comprehensive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Formality Level: <span id="formality-value">5</span>/10</label>
+                    <input type="range" id="formality-level" min="1" max="10" value="5">
+                    <div class="range-labels">
+                        <span>Casual</span>
+                        <span>Formal</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="use-emojis" checked>
+                        <span>Use Emojis in Responses</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Page -->
+    <div class="page" id="user-profile-page">
+        <header class="page-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                    </svg>
+                </button>
+                <h2>👤 Your Profile</h2>
+            </div>
+            <button class="btn-primary" id="save-user-profile">Save Changes</button>
+        </header>
+
+        <div class="profile-container">
+            <div class="profile-section">
+                <h3>Personal Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="user-full-name" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Name</label>
+                        <input type="text" id="user-preferred-name" placeholder="John">
+                        <small>How should the AI address you?</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Title/Position</label>
+                        <input type="text" id="user-title" placeholder="CEO">
+                    </div>
+                    <div class="form-group">
+                        <label>Company</label>
+                        <input type="text" id="user-company" placeholder="Acme Corp">
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Contact Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="user-email" placeholder="john@acme.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="user-phone" placeholder="+1234567890">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="user-location" placeholder="New York, USA">
+                    </div>
+                    <div class="form-group">
+                        <label>Timezone</label>
+                        <div class="timezone-picker-wrapper">
+                            <input type="text" id="timezone-search" placeholder="Search for a city..."
+                                autocomplete="off">
+                            <input type="hidden" id="user-timezone">
+                            <div class="timezone-dropdown" id="timezone-dropdown">
+                                <div class="timezone-dropdown-header">
+                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    <span>Select your city</span>
+                                </div>
+                                <div class="timezone-list" id="timezone-list">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <small class="timezone-display" id="timezone-display"></small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Professional Context</h3>
+                <div class="form-group">
+                    <label>Industry</label>
+                    <input type="text" id="user-industry" placeholder="Technology">
+                </div>
+                <div class="form-group">
+                    <label>Role Description</label>
+                    <textarea id="user-role" rows="3" placeholder="Describe what you do..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Key Responsibilities</label>
+                    <textarea id="user-responsibilities" rows="3"
+                        placeholder="What are your main responsibilities?"></textarea>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Availability & Preferences</h3>
+                <div class="form-group">
+                    <label>Working Hours</label>
+                    <input type="text" id="user-working-hours" placeholder="9 AM - 5 PM EST">
+                </div>
+                <div class="form-group">
+                    <label>Priorities</label>
+                    <textarea id="user-priorities" rows="2" placeholder="What matters most to you?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Background Info (for AI context)</label>
+                    <textarea id="user-background" rows="4"
+                        placeholder="Any additional context that helps the AI understand you better..."></textarea>
+                    <small>This information helps the AI provide more personalized responses</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Marketing Page (Redesigned) -->
+    <div class="page" id="marketing-page">
+        <!-- Dashboard Header -->
+        <header class="marketing-header">
+            <div class="header-left">
+                <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                    </svg>
+                </button>
+                <div>
+                    <h2>Marketing Command Center</h2>
+                    <p class="subtitle">Manage automated campaigns & audience targeting</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-text" onclick="openAudienceManager()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                    </svg>
+                    Audience
+                </button>
+                <button class="btn-primary" onclick="openCampaignWizard()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
+                    New Campaign
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Stats Grid -->
+        <div class="marketing-dashboard-grid">
+            <div class="marketing-stat-card glass-panel">
+                <div class="stat-icon-glow purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <h3>Active Campaigns</h3>
+                    <p class="stat-number" id="mkt-active-count">0</p>
+                    <span class="stat-trend trend-neutral">--</span>
+                </div>
+            </div>
+
+            <div class="marketing-stat-card glass-panel">
+                <div class="stat-icon-glow pink">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                     </svg>
                 </div>
-                <span>People</span>
-            </a>
-            <a href="#" class="mobile-nav-item" data-page="settings">
-                <div class="nav-icon">
+                <div class="stat-info">
+                    <h3>Audience Reach</h3>
+                    <p class="stat-number" id="mkt-audience-reach">0</p>
+                    <span class="stat-trend trend-up">Potential</span>
+                </div>
+            </div>
+
+            <div class="marketing-stat-card glass-panel">
+                <div class="stat-icon-glow blue">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path
-                            d="M19.43 12.98c.04-.32.07-.64.07-98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+                            d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
                     </svg>
                 </div>
-                <span>Settings</span>
-            </a>
-        </nav>
+                <div class="stat-info">
+                    <h3>Next Post</h3>
+                    <p class="stat-number minute-text" id="mkt-next-slot">--:--</p>
+                    <span class="stat-trend">Upcoming</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="marketing-layout">
+            <!-- Left: Campaigns Grid -->
+            <div class="layout-main">
+                <div class="section-title">
+                    <h3>Recent Campaigns</h3>
+                    <button class="btn-icon-sm" onclick="refreshCampaigns()" title="Refresh List">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="campaigns-grid" class="campaigns-grid-modern">
+                    <!-- Populated via JS -->
+                    <div class="empty-state-card">
+                        <p>Loading your campaigns...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Brand & Quick Actions -->
+            <aside class="layout-sidebar">
+                <!-- Brand Identity Card -->
+                <div class="brand-asset-card glass-panel">
+                    <div class="card-header">
+                        <h3>Brand Identity</h3>
+                        <button class="btn-xs" onclick="openBrandProfile()">Edit</button>
+                    </div>
+                    <div class="brand-voice-preview" id="brand-voice-display">
+                        <span class="badge-voice">Professional</span>
+                    </div>
+                    <p class="brand-desc-preview" id="brand-desc-display">
+                        No product info set.
+                    </p>
+                    <div class="brand-progress">
+                        <label>Profile Strength</label>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="brand-strength" style="width: 20%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="actions-card glass-panel">
+                    <h3>Quick Actions</h3>
+                    <div class="action-list">
+                        <button class="action-item" onclick="openAudienceManager()">
+                            <div class="icon-box p-green">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                                </svg>
+                            </div>
+                            <span>Manage Audience</span>
+                        </button>
+                        <button class="action-item" onclick="triggerTestAd()">
+                            <div class="icon-box p-yellow">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                </svg>
+                            </div>
+                            <span>Test Ad Generation</span>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- OVERLAYS / MODALS -->
+
+        <!-- 1. Campaign Wizard Overlay -->
+        <div id="campaign-wizard-overlay" class="modal-overlay">
+            <div class="glass-modal large-modal">
+                <div class="modal-header">
+                    <h2>Create New Campaign</h2>
+                    <button class="btn-close" onclick="closeCampaignWizard()">×</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step active">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Details</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Schedule</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Review</div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="mini-camp-id">
+                    <div class="form-group">
+                        <label>Campaign Name</label>
+                        <input type="text" id="mini-camp-name" placeholder="e.g. Summer Sale" class="form-input">
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>Morning</label>
+                            <input type="time" id="mini-time-m" value="09:00" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Afternoon</label>
+                            <input type="time" id="mini-time-a" value="14:00" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Evening</label>
+                            <input type="time" id="mini-time-e" value="19:00" class="form-input">
+                        </div>
+                    </div>
+                </div>
+                <div class="wizard-container">
+                    <div class="wizard-steps-nav">
+                        <div class="step-nav-item active" data-step="1">1. Details</div>
+                        <div class="step-nav-item" data-step="2">2. Timing</div>
+                        <div class="step-nav-item" data-step="3">3. Audience</div>
+                        <div class="step-nav-item" data-step="4">4. Review</div>
+                    </div>
+
+                    <div class="wizard-content">
+                        <!-- Step 1: Basics -->
+                        <div class="wizard-step active" id="wizard-step-1">
+                            <div class="form-group">
+                                <label>Campaign Name</label>
+                                <input type="text" id="wiz-name" placeholder="e.g. Weekly Flash Sale">
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="wiz-use-custom" onchange="toggleWizCustom(this)">
+                                <label for="wiz-use-custom">Overrride Global Business Profile</label>
+                            </div>
+                            <div id="wiz-custom-profile" class="slide-down-panel" style="display:none;">
+                                <div class="form-group">
+                                    <input type="text" id="wiz-product" placeholder="Specific Product Info">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="wiz-audience" placeholder="Specific Audience">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Time -->
+                        <div class="wizard-step" id="wizard-step-2">
+                            <div class="time-grid">
+                                <div class="time-input">
+                                    <span>Morning</span>
+                                    <input type="time" id="wiz-time-morning" value="07:00">
+                                </div>
+                                <div class="time-input">
+                                    <span>Afternoon</span>
+                                    <input type="time" id="wiz-time-afternoon" value="13:00">
+                                </div>
+                                <div class="time-input">
+                                    <span>Evening</span>
+                                    <input type="time" id="wiz-time-evening" value="19:00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Audience (Target Groups) -->
+                        <div class="wizard-step" id="wizard-step-3">
+                            <div id="wiz-groups-list" class="selectable-list">
+                                <p>Loading groups...</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Review -->
+                        <div class="wizard-step" id="wizard-step-4">
+                            <div class="review-card">
+                                <h3 id="review-name">Campaign Name</h3>
+                                <p id="review-schedule">Schedule: 7am, 1pm, 7pm</p>
+                                <p id="review-groups">Targeting: All Groups</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn-text" id="wiz-prev-btn" onclick="wizardBack()"
+                            style="visibility:hidden">Back</button>
+                        <button class="btn-primary" id="wiz-next-btn" onclick="wizardNext()">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Audience Manager Overlay -->
+        <div id="audience-manager-overlay" class="modal-overlay">
+            <div class="glass-modal">
+                <div class="modal-header">
+                    <h2>Audience Groups</h2>
+                    <button class="btn-close" onclick="closeAudienceManager()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="toolbar">
+                        <button class="btn-secondary" onclick="refreshGroups()">Refresh WhatsApp Groups</button>
+                    </div>
+                    <div id="audience-list-full" class="full-list-view">
+                        <!-- Full list populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Brand Profile Modal -->
+        <div id="brand-profile-modal" class="modal-overlay">
+            <div class="glass-modal medium-modal">
+                <div class="modal-header">
+                    <h2>Edit Global Brand Profile</h2>
+                    <button class="btn-close" onclick="closeBrandProfile()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Product/Service</label>
+                        <textarea id="modal-brand-product" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Audience</label>
+                        <textarea id="modal-brand-audience" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>USP</label>
+                        <textarea id="modal-brand-usp" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Brand Voice</label>
+                        <select id="modal-brand-voice">
+                            <option value="professional">Professional</option>
+                            <option value="friendly">Friendly</option>
+                            <option value="luxury">Luxury</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" onclick="saveBrandProfileFromModal()">Save Profile</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </main>
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <a href="#" class="mobile-nav-item active" data-page="dashboard">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+                </svg>
+            </div>
+            <span>Home</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="chats">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+                </svg>
+                <span class="mobile-badge" id="mobile-chat-count" style="display: none;">0</span>
+            </div>
+            <span>Chats</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="contacts">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                </svg>
+            </div>
+            <span>People</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="settings">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M19.43 12.98c.04-.32.07-.64.07-98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+                </svg>
+            </div>
+            <span>Settings</span>
+        </a>
+    </nav>
     </div>
 
     <!-- Toast Container -->

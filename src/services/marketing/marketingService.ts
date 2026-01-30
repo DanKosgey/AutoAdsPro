@@ -295,23 +295,13 @@ export class MarketingService {
                         const fs = require('fs');
                         const buffer = fs.readFileSync(ad.imagePath);
 
-                        // Increased timeout and retry logic
-                        let sent = false;
-                        for (let attempt = 1; attempt <= 2; attempt++) {
-                            try {
-                                await client.sendImage(groupJid, buffer, ad.text);
-                                console.log(`✅ Image ad sent to ${groupJid}`);
-                                sent = true;
-                                break;
-                            } catch (imgError: any) {
-                                if (attempt === 2) throw imgError;
-                                console.log(`⚠️ Retry ${attempt}/2 for ${groupJid}...`);
-                                await new Promise(resolve => setTimeout(resolve, 3000));
-                            }
-                        }
-                    } catch (imgError) {
-                        console.error(`⚠️ Failed to send image to ${groupJid}, falling back to text:`, imgError);
-                        await client.sendText(groupJid, `(Image upload failed)\n\n${ad.text}`);
+                        await client.sendImage(groupJid, buffer, ad.text);
+                        console.log(`✅ Image ad sent to ${groupJid}`);
+                    } catch (imgError: any) {
+                        console.error(`⚠️ Failed to send image to ${groupJid}, sending text fallback. Error:`, imgError.message);
+                        // Only fallback if image send specifically failed (e.g., file error, upload error)
+                        // Note: If timeout occurs in client.sendImage, it throws.
+                        await client.sendText(groupJid, `(Image unavailable)\n\n${ad.text}`);
                         console.log(`✅ Fallback text ad sent to ${groupJid}`);
                     }
                 } else {

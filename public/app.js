@@ -1408,6 +1408,7 @@ window.submitMiniCampaign = async function () {
 };
 
 // Edit Campaign
+// Edit Campaign
 window.editMiniCampaign = function (id) {
     const campaign = window.allCampaigns.find(c => c.id === id);
     if (!campaign) return;
@@ -1423,22 +1424,30 @@ window.editMiniCampaign = function (id) {
     document.getElementById('mini-time-a').value = campaign.afternoonTime || "13:00";
     document.getElementById('mini-time-e').value = campaign.eveningTime || "19:00";
 
+    // Set Editing Targets (Handle potential issues if targetGroups is null)
+    window.currentEditingTargets = Array.isArray(campaign.targetGroups) ? campaign.targetGroups : [];
+
     // Open Modal
     document.getElementById('simple-campaign-modal').classList.add('active');
 
-    // Reset/Setup Wizard
+    // Enable stepping through wizard comfortably
+    document.querySelectorAll('.marketing-step').forEach((el, index) => {
+        el.style.cursor = 'pointer';
+        el.onclick = () => updateWizardStep(index + 1);
+    });
+
+    // Reset/Setup Wizard to Step 1
     wizardCurrentStep = 1;
     updateWizardStep(1);
 
-    // Set Header
-    document.querySelector('.marketing-modal-title').textContent = "Edit Campaign";
-    document.getElementById('btn-submit').innerHTML = 'Save Changes';
+    // Update UI for Edit Mode
+    document.querySelector('.marketing-modal-title').textContent = `Edit Campaign: ${campaign.name}`;
+    const btnSubmit = document.getElementById('btn-submit');
+    if (btnSubmit) btnSubmit.innerHTML = 'Save Changes';
 
-    // Handle Group Selection (Pre-load and check)
+    // Force reload groups next time Step 3 is viewed to show checkboxes correctly
     const list = document.getElementById('modal-audience-list');
-    list.dataset.loaded = 'false'; // Force reload to ensure checkboxes exist
-    window.currentEditingTargets = campaign.targetGroups || [];
-    // campaign.targetGroups might be string array
+    if (list) list.dataset.loaded = 'false';
 };
 
 // Delete Campaign
@@ -1578,8 +1587,11 @@ async function loadModalGroups() {
                 return;
             }
 
+            const currentTargets = window.currentEditingTargets || [];
+
             list.innerHTML = result.groups.map(g => {
-                const isSelected = window.currentEditingTargets && window.currentEditingTargets.includes(g.id);
+                // Robust check for ID (handle string vs number)
+                const isSelected = currentTargets.some(id => String(id) === String(g.id));
                 const selectedClass = isSelected ? 'selected' : '';
                 const checked = isSelected ? 'checked' : '';
 
@@ -1596,6 +1608,7 @@ async function loadModalGroups() {
             `}).join('');
 
             list.dataset.loaded = 'true';
+            updateReviewSummary(); // Update summary immediately after load
         }
     } catch (e) {
         list.innerHTML = '<p class="empty-text">Error loading groups.</p>';
@@ -1660,3 +1673,89 @@ window.openSimpleCampaignModal = function () {
 window.triggerTestAd = function () {
     showToast("Test Ad feature coming soon!", "info");
 };
+
+// ==========================================
+// Communities Page Logic
+// ==========================================
+
+window.allCommunities = [];
+
+window.loadCommunities = async function () {
+    const list = document.getElementById('communities-list');
+    const totalCountEl = document.getElementById('comm-total-count');
+    const totalReachEl = document.getElementById('comm-total-reach');
+
+    list.innerHTML = '<p class="empty-text">Loading communities...</p>';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/marketing/groups`);
+        const result = await response.json();
+
+        if (result.success && result.groups) {
+            window.allCommunities = result.groups;
+            renderCommunities(result.groups);
+
+            // Update Stats
+            if (totalCountEl) totalCountEl.textContent = result.groups.length;
+            if (totalReachEl) {
+                const totalParticipants = result.groups.reduce((sum, g) => sum + (g.participants || 0), 0);
+                totalReachEl.textContent = totalParticipants.toLocaleString();
+            }
+        } else {
+            list.innerHTML = '<p class="empty-text">No communities found.</p>';
+            if (totalCountEl) totalCountEl.textContent = '0';
+            if (totalReachEl) totalReachEl.textContent = '0';
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<p class="empty-text">Error loading communities.</p>';
+    }
+};
+
+function renderCommunities(groups) {
+    const list = document.getElementById('communities-list');
+    if (!list) return;
+
+    if (groups.length === 0) {
+        list.innerHTML = '<p class="empty-text">No groups match your search.</p>';
+        return;
+    }
+
+    list.innerHTML = groups.map(g => `
+        <div class="marketing-list-item" style="cursor: default;">
+            <div class="community-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            </div>
+            <div style="flex: 1;">
+                <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">${g.name || 'Unknown Group'}</h4>
+                <div style="display: flex; gap: 10px; margin-top: 4px;">
+                     <span style="font-size: 0.85rem; color: var(--text-secondary);">👥 ${g.participants || 0} members</span>
+                     <span style="font-size: 0.8rem; background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary);">${g.id.split('@')[0].slice(-4)}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.filterCommunities = function () {
+    const query = document.getElementById('communities-search').value.toLowerCase();
+    const filtered = window.allCommunities.filter(g =>
+        (g.name && g.name.toLowerCase().includes(query)) ||
+        (g.id && g.id.includes(query))
+    );
+    renderCommunities(filtered);
+};
+
+// Hook into sidebar nav clicks for Communities
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.nav-item').forEach(link => {
+        link.addEventListener('click', (e) => {
+            const pageId = e.currentTarget.dataset.page;
+            if (pageId === 'communities') {
+                loadCommunities();
+            }
+        });
+    });
+});

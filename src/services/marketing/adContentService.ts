@@ -88,6 +88,59 @@ export class AdContentService {
         [TimeOfDay.EVENING]: "Golden hour lighting, long warm shadows, cozy atmospheric glow. Mindset: relaxed, reflective, reward-seeking."
     };
 
+    private getRandomVisualScenario(isService: boolean): string {
+        const productScenarios = [
+            "Macro Detail: Extreme close-up of the product texture/material. Shallow depth of field.",
+            "In-Context Action: The product being used in its natural environment by a person (hands/partial view).",
+            "Studio Hero: The product floating or placed on a minimal podium with dramatic lighting.",
+            "Knolling: Top-down flat lay arrangement of the product with related high-end accessories.",
+            "Natural Light: The product placed on a table/surface near a window with beautiful shadows.",
+            "Splash/Dynamic: The product in motion, with dynamic elements (water splash, dust, speed lines) if applicable."
+        ];
+
+        const serviceScenarios = [
+            "Professional Interaction: A warm, high-quality shot of a professional meeting or consultation.",
+            "Result Visualization: A conceptual representation of the 'After' state or success metric.",
+            "Human Connection: Close-up of happy clients/people shaking hands or smiling authentically.",
+            "Abstract Concept: A clean, modern 3D render representing growth, security, or efficiency.",
+            "Workspace: A messy but aesthetic creative workspace showing the 'process' or tools of the trade.",
+            "Team Hero: A confident, diverse team standing together in a modern office or relevant location."
+        ];
+
+        const set = isService ? serviceScenarios : productScenarios;
+        return set[Math.floor(Math.random() * set.length)];
+    }
+
+    private constructImagePrompt(profile: any, style: VisualStyle, timeContext: TimeOfDay, visualScenario: string): string {
+        const isService = this.detectServiceBusiness(profile.productInfo);
+        const subjectType = isService ? "SERVICE/CONCEPT" : "PHYSICAL PRODUCT";
+
+        return `Professional Commercial Photography ($8k resolution, highly detailed).
+        Subject Type: ${subjectType}
+        Subject Description: "${profile.productInfo}"
+        
+        VISUAL SCENARIO: ${visualScenario}
+        
+        Detailed Context: ${profile.uniqueSellingPoint}.
+        Target Audience: ${profile.targetAudience} (Use for styling/ambiance only).
+        
+        Visual Style: ${this.styleGuides[style]}
+        Lighting/Mood: ${this.timeInfluence[timeContext]}
+        
+        CRITICAL VISUAL GUIDELINES:
+        - PHOTOREALISTIC: Use 8k resolution, highly detailed textures.
+        - COMPOSITION: Rule-of-thirds or centered hero shot based on scenario.
+        - NO TEXT: Use absolutely NO text, logos, or watermarks in the image.
+        - NO DEFORMITIES: Fix hands/faces if human subjects are present.
+        - Make it look like a real advertisement from a premium magazine.`;
+    }
+
+    private detectServiceBusiness(info: string): boolean {
+        const lower = info.toLowerCase();
+        const keywords = ['service', 'consulting', 'agency', 'coaching', 'training', 'design', 'development', 'writer', 'assistant', 'cleaning', 'repair', 'legal', 'law', 'account'];
+        return keywords.some(k => lower.includes(k));
+    }
+
     /**
      * Generate complete ad content (Text + Image URL/Path)
      */
@@ -119,15 +172,15 @@ export class AdContentService {
         const adCopy = await this.generateAdCopy(profile, style, timeContext, framework, customInstructions);
 
         // 6. Generate Image
-        // If Custom Instructions are present, maybe modify image prompt too?
-        // For now, let's keep image consistent with product unless instructions explicitly ask (complex).
-        // We'll stick to standard image generation for stability, or append a note.
-        // Let's just trust the product context for image.
-        const imagePrompt = this.constructImagePrompt(profile, style, timeContext);
+        // visual scenario engine
+        const isService = this.detectServiceBusiness(profile.productInfo);
+        const visualScenario = this.getRandomVisualScenario(isService);
+
+        const imagePrompt = this.constructImagePrompt(profile, style, timeContext, visualScenario);
         let imagePath: string | undefined;
 
         try {
-            console.log(`🎨 Generating visual for ad (Style: ${style}, Time: ${timeContext}, Framework: ${framework})...`);
+            console.log(`🎨 Generating visual (Style: ${style}, Scenario: ${visualScenario})...`);
             imagePath = await googleImageGenerationService.generateImage(imagePrompt);
         } catch (e) {
             console.error("Failed to generate ad image:", e);
@@ -162,10 +215,28 @@ export class AdContentService {
         return { style, timeContext };
     }
 
+    /**
+     * Creativity Engine: Defines distinct personas for the AI to adopt
+     */
+    private getRandomCreativeAngle(): { persona: string, angle: string } {
+        const angles = [
+            { persona: " The Storyteller", angle: "Start with a micro-story or scenario. Focus on the 'before' state." },
+            { persona: "The Best Friend", angle: "Casual, intimate, strictly 1-on-1 tone. candid advice." },
+            { persona: "The Provocateur", angle: "Start with a controversial or surprising statement. Challenge a common belief." },
+            { persona: "The Minimalist", angle: "Extremely punchy, short sentences. Focus effectively on the Result only." },
+            { persona: "The Insider", angle: "Use 'Behind the scenes' or 'Secret' framing. Make them feel part of an exclusive club." },
+            { persona: "The Analyst", angle: "Focus on logic, numbers, and efficiency. 'Why waste X when you can Y?'" },
+            { persona: "The Visionary", angle: "Focus on the 'Dream Outcome'. Paint a vivid picture of the future self." },
+            { persona: "The Urgent Messenger", angle: "Strictly focus on 'Why Now'. Create immediate but authentic scarcity." }
+        ];
+        return angles[Math.floor(Math.random() * angles.length)];
+    }
+
     private async generateAdCopy(profile: any, style: VisualStyle, timeContext: TimeOfDay, framework: PitchFramework, customInstructions?: string): Promise<any> {
         const shopContext = `Brand: ${profile.productInfo}, Industry: ${profile.targetAudience}. USP: ${profile.uniqueSellingPoint}. Voice: ${profile.brandVoice}`;
 
         const frameworkInstructions = this.getFrameworkInstructions(framework);
+        const { persona, angle } = this.getRandomCreativeAngle();
 
         let instructionBlock = "";
         if (customInstructions) {
@@ -177,7 +248,8 @@ export class AdContentService {
             `;
         }
 
-        const prompt = `You are a Senior Creative Director. ${shopContext}
+        const prompt = `You are a World-Class Copywriter adopting the persona of '${persona}'. ${shopContext}
+        
         Generate a WhatsApp ad variant for:
         Product: ${profile.productInfo}
         Audience: ${profile.targetAudience}
@@ -186,13 +258,18 @@ export class AdContentService {
         Style: ${style}
         Framework: ${framework}
         
+        CREATIVE ANGLE: ${angle}
+        
         ${frameworkInstructions}
 
         ${instructionBlock}
  
         Guidelines:
+        - 🛑 DO NOT start with "Are you..." or "Do you...". This is banned.
+        - 🛑 DO NOT use the phrase "Unlock your potential" or "Elevate your business".
+        - Start with a Hook that fits the '${persona}' persona.
         - Adapt hooks for the ${timeContext} mindset.
-        - Include high-impact emojis.
+        - Include high-impact emojis, but don't overdo it.
         - Return a SINGLE JSON object with keys: 'headline', 'body', 'cta'.
         - Do NOT wrap in markdown code blocks. Just raw JSON if possible, or simple text I can parse.`;
 
@@ -223,23 +300,7 @@ export class AdContentService {
         return instructions[framework];
     }
 
-    private constructImagePrompt(profile: any, style: VisualStyle, timeContext: TimeOfDay): string {
-        return `High-end commercial product photography of "${profile.productInfo}". 
-        The image must prominently feature the product/service itself in a realistic setting.
-        
-        Detailed Context: ${profile.uniqueSellingPoint}.
-        Target Audience: ${profile.targetAudience}.
-        
-        Visual Style: ${this.styleGuides[style]}
-        Lighting/Mood: ${this.timeInfluence[timeContext]}
-        
-        CRITICAL VISUAL GUIDELINES:
-        - PHOTOREALISTIC: Use 8k resolution, highly detailed textures, depth of field.
-        - FOCUS ON SUBJECT: Show the actual product or service result. Avoid generic abstract AI shapes.
-        - COMPOSITION: Professional rule-of-thirds or centered hero shot.
-        - NO text, NO logos, NO watermarks, NO distorted faces or hands.
-        - Make it look like a real advertisement from a premium magazine.`;
-    }
+
 
     private formatAdOutput(adJson: any): string {
         if (typeof adJson === 'string') return adJson;
