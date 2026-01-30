@@ -109,7 +109,8 @@ export class MarketingService {
             targetAudience?: string,
             uniqueSellingPoint?: string,
             brandVoice?: string,
-            businessDescription?: string
+            businessDescription?: string,
+            companyLink?: string
         }
     ): Promise<string> {
         if (!await this.hasProfile() && (!businessContext || !businessContext.productInfo)) {
@@ -148,7 +149,8 @@ export class MarketingService {
             productInfo: businessContext?.productInfo,
             targetAudience: businessContext?.targetAudience,
             uniqueSellingPoint: businessContext?.uniqueSellingPoint,
-            brandVoice: businessContext?.brandVoice
+            brandVoice: businessContext?.brandVoice,
+            companyLink: businessContext?.companyLink
         }).returning();
 
         return `✅ Campaign '${name}' created! ID: ${campaign.id}. Use 'view schedule' to see upcoming posts.`;

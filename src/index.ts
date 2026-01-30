@@ -517,14 +517,14 @@ Format as a cohesive paragraph (150-250 words). Be specific and actionable. Avoi
 app.post('/api/marketing/campaign', async (req, res) => {
     try {
         const { marketingService } = await import('./services/marketing/marketingService');
-        const { name, morningTime, afternoonTime, eveningTime, productInfo, targetAudience, uniqueSellingPoint, brandVoice, businessDescription } = req.body;
+        const { name, morningTime, afternoonTime, eveningTime, productInfo, targetAudience, uniqueSellingPoint, brandVoice, businessDescription, companyLink } = req.body;
 
         const result = await marketingService.createCampaign(
             name,
             morningTime,
             afternoonTime,
             eveningTime,
-            productInfo ? { productInfo, targetAudience, uniqueSellingPoint, brandVoice, businessDescription } : undefined
+            productInfo ? { productInfo, targetAudience, uniqueSellingPoint, brandVoice, businessDescription, companyLink } : undefined
         );
         res.json({ success: true, message: result });
     } catch (error) {

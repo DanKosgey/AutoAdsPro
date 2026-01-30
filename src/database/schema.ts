@@ -240,6 +240,7 @@ export const marketingCampaigns = pgTable('marketing_campaigns', {
     uniqueSellingPoint: text('unique_selling_point'),
     brandVoice: text('brand_voice'),
     visualStyle: text('visual_style').default('minimalist'),
+    companyLink: text('company_link'),
 
     settings: jsonb('settings'), // Flexible config
     createdAt: timestamp('created_at').defaultNow(),

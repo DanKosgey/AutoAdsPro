@@ -378,6 +378,11 @@ async function selectChat(phone) {
         chatDetail.innerHTML = `
             <div class="chat-messages-container">
                 <div class="chat-messages-header">
+                    <button class="mobile-chat-back" onclick="closeChat()" style="display: none;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                    </button>
                     <div class="chat-avatar">${(contact.name || 'Unknown').charAt(0).toUpperCase()}</div>
                     <div>
                         <h3>${contact.name || 'Unknown'}</h3>
@@ -395,89 +400,29 @@ async function selectChat(phone) {
             </div>
         `;
 
-        // Mobile specific: Show detail view
+        // Mobile specific: Show detail view & back button
         if (window.innerWidth <= 768) {
             chatDetail.classList.add('active');
-
-            // Add back button for mobile
-            const header = chatDetail.querySelector('.chat-messages-header');
-            if (header && !header.querySelector('.mobile-back-btn')) {
-                const backBtn = document.createElement('button');
-                backBtn.className = 'mobile-back-btn';
-                backBtn.innerHTML = `
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                    </svg>
-                `;
-                // Use theme variables for colors
-                backBtn.style.background = 'transparent';
-                backBtn.style.border = 'none';
-                backBtn.style.color = 'var(--text-primary)'; // Changed from 'white' to theme variable
-                backBtn.style.marginRight = '0.5rem';
-                backBtn.style.cursor = 'pointer';
-                backBtn.style.display = 'flex';
-                backBtn.style.padding = '8px';
-                backBtn.style.borderRadius = '50%';
-
-                // Add hover effect via inline style or class
-                backBtn.onmouseover = () => backBtn.style.background = 'rgba(128, 128, 128, 0.1)';
-                backBtn.onmouseout = () => backBtn.style.background = 'transparent';
-
-                backBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    chatDetail.classList.remove('active');
-                };
-
-                header.insertBefore(backBtn, header.firstChild);
-            }
-        } else {
-            // Desktop: Add a close button
-            const header = chatDetail.querySelector('.chat-messages-header');
-            if (header && !header.querySelector('.desktop-close-btn')) {
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'desktop-close-btn';
-                closeBtn.innerHTML = `
-                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                         <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                     </svg>
-                 `;
-
-                closeBtn.style.marginLeft = 'auto'; // Push to right
-                closeBtn.style.background = 'transparent';
-                closeBtn.style.border = 'none';
-                closeBtn.style.color = 'var(--text-secondary)';
-                closeBtn.style.cursor = 'pointer';
-                closeBtn.style.padding = '8px';
-                closeBtn.style.borderRadius = '50%';
-                closeBtn.style.display = 'flex';
-
-                closeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    // Reset to empty state
-                    chatDetail.innerHTML = `
-                        <div class="chat-detail-empty">
-                            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                                <circle cx="40" cy="40" r="40" fill="#f3f4f6"/>
-                                <path d="M30 35h20M30 45h14" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            <h3>Select a conversation</h3>
-                            <p>Choose a chat from the list to view messages</p>
-                        </div>
-                     `;
-                };
-
-                header.appendChild(closeBtn);
-            }
+            const backBtn = chatDetail.querySelector('.mobile-chat-back');
+            if (backBtn) backBtn.style.display = 'flex';
         }
     } catch (error) {
-        console.error('Failed to load chat:', error);
+        console.error('Failed to select chat:', error);
         chatDetail.innerHTML = `
-            <div class="chat-detail-empty">
-                <p style="color: var(--danger);">Failed to load conversation</p>
+            <div style="padding: 2rem; color: var(--danger);">
+                <h3>Error loading chat</h3>
+                <p>${error.message}</p>
             </div>
         `;
     }
 }
+
+function closeChat() {
+    const chatDetail = document.getElementById('chat-detail');
+    chatDetail.classList.remove('active');
+}
+
+
 
 function updateChatCount(count) {
     const el = document.getElementById('chat-count');
@@ -1404,6 +1349,7 @@ window.submitMiniCampaign = async function () {
         productInfo: document.getElementById('mini-product-info').value,
         uniqueSellingPoint: document.getElementById('mini-usp').value,
         brandVoice: document.getElementById('mini-voice').value,
+        companyLink: document.getElementById('mini-company-link').value || null,
         // targetAudience is inferred from product or can be separate? 
         // In this UI we removed targetAudience text input favoring group selection. 
         // But backend might need it for ad copy generation.

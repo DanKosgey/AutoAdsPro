@@ -169,7 +169,7 @@ export class AdContentService {
         const timeContext = this.extractTimeContext(styleHint);
 
         // 5. Generate Copy (with framework and business description)
-        const adCopy = await this.generateAdCopy(profile, style, timeContext, framework, customInstructions, campaign.name, campaign.businessDescription);
+        const adCopy = await this.generateAdCopy(profile, style, timeContext, framework, customInstructions, campaign.name, campaign.businessDescription, campaign.companyLink);
 
         // 6. Generate Image
         // visual scenario engine
@@ -235,13 +235,15 @@ export class AdContentService {
         return angles[Math.floor(Math.random() * angles.length)];
     }
 
-    private async generateAdCopy(profile: any, style: VisualStyle, timeContext: TimeOfDay, framework: PitchFramework, customInstructions?: string, campaignName?: string, businessDescription?: string | null): Promise<any> {
+    private async generateAdCopy(profile: any, style: VisualStyle, timeContext: TimeOfDay, framework: PitchFramework, customInstructions?: string, campaignName?: string, businessDescription?: string | null, companyLink?: string | null): Promise<any> {
         // Prioritize businessDescription as the primary context
         const businessContext = businessDescription || `Brand: ${profile.productInfo}, Industry: ${profile.targetAudience}. USP: ${profile.uniqueSellingPoint}. Voice: ${profile.brandVoice}`;
 
         const frameworkInstructions = this.getFrameworkInstructions(framework);
         const { persona, angle } = this.getRandomCreativeAngle();
         const campContext = campaignName ? `Campaign Theme: "${campaignName}"` : "";
+
+        const linkInstruction = companyLink ? `\n        CONTEXT: The company website is: ${companyLink}. Ensure the CTA drives traffic there.` : "";
 
         let instructionBlock = "";
         if (customInstructions) {
@@ -257,38 +259,45 @@ export class AdContentService {
         
         BUSINESS CONTEXT (PRIMARY):
         ${businessContext}
+        ${linkInstruction}
         
-        Generate a WhatsApp ad variant for:
+        Task: Write a *hypershort*, edgy WhatsApp ad.
         ${campContext}
-        Time Context: ${timeContext} (${this.timeInfluence[timeContext]})
-        Style: ${style}
-        Framework: ${framework}
+        Time: ${timeContext}
+        
+        CRITICAL RULES (STRICT):
+        1. **LENGTH**: MAXIMUM 1-2 SENTENCES total for the body. This is a hard limit.
+        2. **STYLE**: "Random cool shit". Be punchy, witty, unexpected, and high energy.
+        3. **NO FLUFF**: No "Good morning", no "Hello", no "Attention". Jump straight into the hook.
+        4. **FORMAT**: 
+           - Headline: 4 words max. Punchy.
+           - Body: 1-2 short, impactful sentences.
+           - CTA: Short and direct.
         
         CREATIVE ANGLE: ${angle}
         
         ${frameworkInstructions}
-
+        
         ${instructionBlock}
- 
+
         Guidelines:
-        - 🎯 BUSINESS-FIRST: Use the Business Context above as your PRIMARY source of truth. Create ads that deeply understand this specific business.
-        - 🎯 PRODUCT ISOLATION: Focus strictly on the business described. Do not mix with generic brand info unless relevant. Treat this as a unique campaign.
-        - 🛑 DO NOT start with "Are you..." or "Do you...". This is banned.
-        - 🛑 DO NOT use the phrase "Unlock your potential" or "Elevate your business".
-        - Start with a Hook that fits the '${persona}' persona.
-        - Adapt hooks for the ${timeContext} mindset.
-        - Include high-impact emojis, but don't overdo it.
+        - 🎯 BUSINESS-FIRST: Use the Business Context above.
+        - 🛑 STRICTLY 1-2 SENTENCES. Less is more.
+        - Include 1-2 relevant emojis.
         - Return a SINGLE JSON object with keys: 'headline', 'body', 'cta'.
-        - Do NOT wrap in markdown code blocks. Just raw JSON if possible, or simple text I can parse.`;
+        - Do NOT wrap in markdown code blocks. Just raw JSON if possible.`;
 
         const raw = await geminiService.generateText(prompt);
         try {
             // Attempt to clean markdown
             const jsonStr = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonStr);
+            const result = JSON.parse(jsonStr);
+            // Attach link to result for formatter
+            if (companyLink) result.companyLink = companyLink;
+            return result;
         } catch (e) {
             // Fallback if AI returns plain text
-            return { headline: "New Offer!", body: raw, cta: "Shop Now" };
+            return { headline: "New Offer!", body: raw, cta: "Shop Now", companyLink };
         }
     }
 
@@ -315,7 +324,12 @@ export class AdContentService {
 
         let output = `*${adJson.headline || 'Special Offer'}*\n\n`;
         output += `${adJson.body}\n\n`;
-        output += `👉 ${adJson.cta || 'Reply to learn more!'}`;
+
+        let cta = `👉 ${adJson.cta || 'Reply to learn more!'}`;
+        if (adJson.companyLink) {
+            cta += `\n🔗 ${adJson.companyLink}`;
+        }
+        output += cta;
         return output;
     }
 }
