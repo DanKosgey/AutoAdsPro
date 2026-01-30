@@ -1017,6 +1017,55 @@
                             <form id="campaign-wizard-form">
                                 <input type="hidden" id="mini-camp-id">
 
+                                <!-- Step 1: Details -->
+                                <div class="marketing-wizard-step" data-step="1">
+                                    <div class="marketing-form-group">
+                                        <label class="marketing-form-label">Campaign Name</label>
+                                        <input type="text" id="mini-camp-name" class="marketing-form-input"
+                                            placeholder="e.g. Summer Sale 2026">
+                                    </div>
+                                    <div class="marketing-form-group">
+                                        <label class="marketing-form-label">Product/Service Info</label>
+                                        <textarea id="mini-product-info" class="marketing-form-input" rows="3"
+                                            placeholder="Describe what you are promoting..."></textarea>
+                                    </div>
+                                    <div class="marketing-form-group">
+                                        <label class="marketing-form-label">Unique Selling Point</label>
+                                        <input type="text" id="mini-usp" class="marketing-form-input"
+                                            placeholder="Why should people buy?">
+                                    </div>
+                                    <div class="marketing-form-group">
+                                        <label class="marketing-form-label">Brand Voice</label>
+                                        <select id="mini-voice" class="marketing-form-input">
+                                            <option value="professional">Professional</option>
+                                            <option value="friendly">Friendly</option>
+                                            <option value="urgent">Urgent</option>
+                                            <option value="luxury">Luxury</option>
+                                            <option value="playful">Playful</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Timing -->
+                                <div class="marketing-wizard-step" data-step="2" style="display: none;">
+                                    <p style="margin-bottom: 1rem; color: var(--text-secondary);">Set the times for your
+                                        daily automated posts.</p>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                                        <div class="marketing-form-group">
+                                            <label class="marketing-form-label">Morning</label>
+                                            <input type="time" id="mini-time-m" class="marketing-form-input">
+                                        </div>
+                                        <div class="marketing-form-group">
+                                            <label class="marketing-form-label">Afternoon</label>
+                                            <input type="time" id="mini-time-a" class="marketing-form-input">
+                                        </div>
+                                        <div class="marketing-form-group">
+                                            <label class="marketing-form-label">Evening</label>
+                                            <input type="time" id="mini-time-e" class="marketing-form-input">
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="marketing-wizard-step" data-step="3" style="display: none;">
                                     <div class="marketing-form-group">
                                         <label class="marketing-form-label">Select Target Audience</label>
