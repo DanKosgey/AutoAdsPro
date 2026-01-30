@@ -1034,6 +1034,33 @@
                                         <input type="text" id="mini-camp-name" class="marketing-form-input"
                                             placeholder="e.g. Summer Sale 2026">
                                     </div>
+
+                                    <!-- Business Description (NEW) -->
+                                    <div class="marketing-form-group">
+                                        <label class="marketing-form-label">
+                                            Describe Your Business
+                                            <small
+                                                style="color: var(--text-secondary); font-weight: normal; display: block; margin-top: 0.25rem;">
+                                                Briefly explain what your business does, who it serves, and what makes
+                                                it special
+                                            </small>
+                                        </label>
+                                        <textarea id="mini-business-desc-raw" class="marketing-form-input" rows="3"
+                                            placeholder="e.g., We sell handmade leather bags for professionals who value quality and style..."></textarea>
+                                        <button type="button" class="marketing-btn-secondary" id="enhance-desc-btn"
+                                            style="margin-top: 0.5rem; width: 100%;">
+                                            ✨ Enhance with AI
+                                        </button>
+                                        <div id="enhanced-desc-container" style="display: none; margin-top: 1rem;">
+                                            <label class="marketing-form-label">Enhanced Description
+                                                (AI-Generated)</label>
+                                            <div id="enhanced-desc-display"
+                                                style="background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.875rem; line-height: 1.6; color: var(--text-primary);">
+                                            </div>
+                                            <input type="hidden" id="mini-business-desc" />
+                                        </div>
+                                    </div>
+
                                     <div class="marketing-form-group">
                                         <label class="marketing-form-label">Product/Service Info</label>
                                         <textarea id="mini-product-info" class="marketing-form-input" rows="3"

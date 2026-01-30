@@ -1381,6 +1381,7 @@ window.submitMiniCampaign = async function () {
         morningTime: document.getElementById('mini-time-m').value,
         afternoonTime: document.getElementById('mini-time-a').value,
         eveningTime: document.getElementById('mini-time-e').value,
+        businessDescription: document.getElementById('mini-business-desc').value || null,
         productInfo: document.getElementById('mini-product-info').value,
         uniqueSellingPoint: document.getElementById('mini-usp').value,
         brandVoice: document.getElementById('mini-voice').value,
@@ -1814,4 +1815,61 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+});
+
+// ========================================
+// BUSINESS DESCRIPTION AI ENHANCEMENT
+// ========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const enhanceBtn = document.getElementById('enhance-desc-btn');
+    const rawDescInput = document.getElementById('mini-business-desc-raw');
+    const enhancedContainer = document.getElementById('enhanced-desc-container');
+    const enhancedDisplay = document.getElementById('enhanced-desc-display');
+    const enhancedHiddenInput = document.getElementById('mini-business-desc');
+
+    if (enhanceBtn) {
+        enhanceBtn.addEventListener('click', async () => {
+            const rawDesc = rawDescInput.value.trim();
+
+            if (!rawDesc) {
+                alert('Please describe your business first');
+                return;
+            }
+
+            // Show loading state
+            enhanceBtn.disabled = true;
+            enhanceBtn.textContent = '⏳ Enhancing...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/marketing/enhance-description`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rawDescription: rawDesc })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.enhancedDescription) {
+                    // Show enhanced description
+                    enhancedDisplay.textContent = data.enhancedDescription;
+                    enhancedHiddenInput.value = data.enhancedDescription;
+                    enhancedContainer.style.display = 'block';
+
+                    // Success feedback
+                    enhanceBtn.textContent = '✅ Enhanced!';
+                    setTimeout(() => {
+                        enhanceBtn.textContent = '✨ Enhance with AI';
+                        enhanceBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Enhancement failed');
+                }
+            } catch (error) {
+                console.error('Enhancement error:', error);
+                alert('Failed to enhance description: ' + error.message);
+                enhanceBtn.textContent = '✨ Enhance with AI';
+                enhanceBtn.disabled = false;
+            }
+        });
+    }
 });

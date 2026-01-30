@@ -108,11 +108,12 @@ export class MarketingService {
             productInfo?: string,
             targetAudience?: string,
             uniqueSellingPoint?: string,
-            brandVoice?: string
+            brandVoice?: string,
+            businessDescription?: string
         }
     ): Promise<string> {
         if (!await this.hasProfile() && (!businessContext || !businessContext.productInfo)) {
-            return "❌ Please complete the onboarding first or provide campaign details."
+            return "❌ Please complete the onboarding first or provide campaign details.";
         }
 
         // Check for duplicates
@@ -143,6 +144,7 @@ export class MarketingService {
             afternoonTime,
             eveningTime,
             // Save Business Context (if provided)
+            businessDescription: businessContext?.businessDescription,
             productInfo: businessContext?.productInfo,
             targetAudience: businessContext?.targetAudience,
             uniqueSellingPoint: businessContext?.uniqueSellingPoint,

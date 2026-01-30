@@ -168,8 +168,8 @@ export class AdContentService {
         // 4. Determine time context from styleHint
         const timeContext = this.extractTimeContext(styleHint);
 
-        // 5. Generate Copy (with framework)
-        const adCopy = await this.generateAdCopy(profile, style, timeContext, framework, customInstructions, campaign.name);
+        // 5. Generate Copy (with framework and business description)
+        const adCopy = await this.generateAdCopy(profile, style, timeContext, framework, customInstructions, campaign.name, campaign.businessDescription);
 
         // 6. Generate Image
         // visual scenario engine
@@ -235,8 +235,9 @@ export class AdContentService {
         return angles[Math.floor(Math.random() * angles.length)];
     }
 
-    private async generateAdCopy(profile: any, style: VisualStyle, timeContext: TimeOfDay, framework: PitchFramework, customInstructions?: string, campaignName?: string): Promise<any> {
-        const shopContext = `Brand: ${profile.productInfo}, Industry: ${profile.targetAudience}. USP: ${profile.uniqueSellingPoint}. Voice: ${profile.brandVoice}`;
+    private async generateAdCopy(profile: any, style: VisualStyle, timeContext: TimeOfDay, framework: PitchFramework, customInstructions?: string, campaignName?: string, businessDescription?: string | null): Promise<any> {
+        // Prioritize businessDescription as the primary context
+        const businessContext = businessDescription || `Brand: ${profile.productInfo}, Industry: ${profile.targetAudience}. USP: ${profile.uniqueSellingPoint}. Voice: ${profile.brandVoice}`;
 
         const frameworkInstructions = this.getFrameworkInstructions(framework);
         const { persona, angle } = this.getRandomCreativeAngle();
@@ -252,12 +253,12 @@ export class AdContentService {
             `;
         }
 
-        const prompt = `You are a World-Class Copywriter adopting the persona of '${persona}'. ${shopContext}
+        const prompt = `You are a World-Class Copywriter adopting the persona of '${persona}'.
+        
+        BUSINESS CONTEXT (PRIMARY):
+        ${businessContext}
         
         Generate a WhatsApp ad variant for:
-        Product/Focus: ${profile.productInfo}
-        Audience: ${profile.targetAudience}
-        Tone: ${profile.brandVoice}
         ${campContext}
         Time Context: ${timeContext} (${this.timeInfluence[timeContext]})
         Style: ${style}
@@ -270,7 +271,8 @@ export class AdContentService {
         ${instructionBlock}
  
         Guidelines:
-        - 🎯 PRODUCT ISOLATION: Focus strictly on the 'Product/Focus' described above. Do not mix with generic brand info unless relevant. Treat this as a unique campaign.
+        - 🎯 BUSINESS-FIRST: Use the Business Context above as your PRIMARY source of truth. Create ads that deeply understand this specific business.
+        - 🎯 PRODUCT ISOLATION: Focus strictly on the business described. Do not mix with generic brand info unless relevant. Treat this as a unique campaign.
         - 🛑 DO NOT start with "Are you..." or "Do you...". This is banned.
         - 🛑 DO NOT use the phrase "Unlock your potential" or "Elevate your business".
         - Start with a Hook that fits the '${persona}' persona.

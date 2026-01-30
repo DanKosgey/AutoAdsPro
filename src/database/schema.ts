@@ -234,6 +234,7 @@ export const marketingCampaigns = pgTable('marketing_campaigns', {
     targetGroups: jsonb('target_groups'),
 
     // Business Context (Overrides global profile)
+    businessDescription: text('business_description'), // AI-enhanced comprehensive business context
     productInfo: text('product_info'),
     targetAudience: text('target_audience'),
     uniqueSellingPoint: text('unique_selling_point'),

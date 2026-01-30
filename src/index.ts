@@ -473,17 +473,58 @@ app.put('/api/marketing/profile', async (req, res) => {
     }
 });
 
+// AI-Powered Business Description Enhancement
+app.post('/api/marketing/enhance-description', async (req, res) => {
+    try {
+        const { rawDescription } = req.body;
+
+        if (!rawDescription || rawDescription.trim().length === 0) {
+            return res.status(400).json({ error: 'Description is required' });
+        }
+
+        const { geminiService } = await import('./services/ai/gemini');
+
+        const enhancementPrompt = `You are a business analyst helping to create a comprehensive business profile.
+
+USER'S BRIEF DESCRIPTION:
+"${rawDescription}"
+
+Your task: Transform this into a detailed, professional business description that will help AI models generate highly relevant marketing content.
+
+Include:
+1. **Industry & Market**: What industry/sector is this business in?
+2. **Core Offering**: What exactly do they sell/provide? Be specific.
+3. **Target Customers**: Who are the ideal customers? Demographics, needs, pain points.
+4. **Unique Value**: What makes this business different/better than competitors?
+5. **Brand Personality**: What tone/voice should marketing have? (Professional, friendly, luxury, etc.)
+6. **Key Benefits**: Top 3-5 benefits customers get from this business.
+
+Format as a cohesive paragraph (150-250 words). Be specific and actionable. Avoid generic fluff.`;
+
+        const enhanced = await geminiService.generateText(enhancementPrompt);
+
+        res.json({
+            success: true,
+            enhancedDescription: enhanced.trim()
+        });
+    } catch (error) {
+        console.error('Failed to enhance description:', error);
+        res.status(500).json({ error: 'Failed to enhance description' });
+    }
+});
+
+
 app.post('/api/marketing/campaign', async (req, res) => {
     try {
         const { marketingService } = await import('./services/marketing/marketingService');
-        const { name, morningTime, afternoonTime, eveningTime, productInfo, targetAudience, uniqueSellingPoint, brandVoice } = req.body;
+        const { name, morningTime, afternoonTime, eveningTime, productInfo, targetAudience, uniqueSellingPoint, brandVoice, businessDescription } = req.body;
 
         const result = await marketingService.createCampaign(
             name,
             morningTime,
             afternoonTime,
             eveningTime,
-            productInfo ? { productInfo, targetAudience, uniqueSellingPoint, brandVoice } : undefined
+            productInfo ? { productInfo, targetAudience, uniqueSellingPoint, brandVoice, businessDescription } : undefined
         );
         res.json({ success: true, message: result });
     } catch (error) {
