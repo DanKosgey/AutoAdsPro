@@ -254,7 +254,7 @@ export class MarketingService {
                         let sent = false;
                         for (let attempt = 1; attempt <= 2; attempt++) {
                             try {
-                                await client.sendImage(groupJid, buffer, `[TEST MODE - AUTONOMOUS AGENT]\n\n${ad.text}`);
+                                await client.sendImage(groupJid, buffer, ad.text);
                                 console.log(`✅ Image ad sent to ${groupJid}`);
                                 sent = true;
                                 break;
@@ -266,12 +266,12 @@ export class MarketingService {
                         }
                     } catch (imgError) {
                         console.error(`⚠️ Failed to send image to ${groupJid}, falling back to text:`, imgError);
-                        await client.sendText(groupJid, `[TEST MODE - AUTONOMOUS AGENT]\n\n(Image upload failed)\n\n${ad.text}`);
+                        await client.sendText(groupJid, `(Image upload failed)\n\n${ad.text}`);
                         console.log(`✅ Fallback text ad sent to ${groupJid}`);
                     }
                 } else {
                     console.log(`📝 Sending text ad to ${groupJid}...`);
-                    await client.sendText(groupJid, `[TEST MODE - AUTONOMOUS AGENT]\n\n${ad.text}`);
+                    await client.sendText(groupJid, ad.text);
                     console.log(`✅ Text ad sent to ${groupJid}`);
                 }
 
