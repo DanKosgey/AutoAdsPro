@@ -5,8 +5,8 @@
 
 import { googleCalendar } from '../googleCalendar';
 import { db } from '../../database';
-import { messageLogs } from '../../database/schema';
-import { ilike, desc } from 'drizzle-orm';
+import { messageLogs, contacts } from '../../database/schema';
+import { ilike, desc, eq } from 'drizzle-orm';
 import * as ownerTools from './ownerTools';
 import { webScraper } from '../webScraper';
 
