@@ -31,7 +31,7 @@ export class GoogleImageGenerationService {
             // Download the image
             const response = await axios.get(imageUrl, {
                 responseType: 'arraybuffer',
-                timeout: 30000 // 30 second timeout
+                timeout: 60000 // 60 second timeout
             });
 
             const buffer = Buffer.from(response.data);

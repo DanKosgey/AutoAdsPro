@@ -513,12 +513,12 @@ export async function executeLocalTool(name: string, args: any, context: any) {
                     // Trigger the ACTUAL broadcast logic
                     console.log(`🚀 Tool 'post_now' triggering broadcast for slot: ${args.type}`);
 
-                    // Execute in background to avoid timeout? No, let's await it so we know if it failed.
-                    // But executeMarketingSlot returns void.
-                    await marketingService.executeMarketingSlot(client, args.type);
+                    // Execute in background to avoid timeout and double-execution by agent
+                    marketingService.executeMarketingSlot(client, args.type)
+                        .catch(err => console.error(`❌ Background broadcast failed for ${args.type}:`, err));
 
                     return {
-                        result: `✅ Broadcast command sent successfully for '${args.type}'.\nThe ad is being generated and sent to all target groups now.`
+                        result: `✅ Broadcast command sent successfully for '${args.type}'.\nThe ad is being generated and sent to all target groups in the background.`
                     };
 
                 } else {

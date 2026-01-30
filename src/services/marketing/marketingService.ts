@@ -214,8 +214,8 @@ export class MarketingService {
         // Determine style based on slot
         let style = 'balanced';
         if (slot.includes('morning')) style = 'energetic, morning, fresh start';
-        else if (slot.includes('afternoon')) style = 'practical, solution-focused';
-        else if (slot.includes('evening')) style = 'relaxed, aspirational, cozy';
+        else if (slot.includes('afternoon')) style = 'practical, solution-focused, afternoon';
+        else if (slot.includes('evening')) style = 'relaxed, aspirational, cozy, evening';
 
         // Check if forced text-only mode
         const forceTextOnly = process.env.FORCE_TEXT_ONLY_ADS === 'true';
