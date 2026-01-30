@@ -246,6 +246,10 @@ export class WhatsAppClient {
         });
         this.concurrencyController.start();
 
+        // Initialize Ephemeral Ads Service
+        const { ephemeralAdsService } = await import('../services/marketing/ephemeralAdsService');
+        ephemeralAdsService.setClient(this);
+
         console.log('🎯 Advanced queue system initialized');
 
         if (this.sock) {
@@ -647,22 +651,50 @@ export class WhatsAppClient {
     }
   }
 
-  public async sendText(jid: string, text: string): Promise<void> {
+  // Track last message key per chat for deletion capability
+  private lastMessageKeys: Map<string, any> = new Map();
+
+  public async sendText(jid: string, text: string): Promise<any> {
     if (!this.sock) {
       console.warn('⚠️ Cannot send message: Client not initialized');
       return;
     }
 
     try {
-      await this.sock.sendMessage(jid, { text });
+      const sentMsg = await this.sock.sendMessage(jid, { text });
+      if (sentMsg?.key) {
+        this.lastMessageKeys.set(jid, sentMsg.key);
+      }
       console.log(`✅ Text sent to ${jid}`);
+      return sentMsg;
     } catch (error) {
       console.error(`❌ Error sending text to ${jid}:`, error);
       throw error;
     }
   }
 
-  public async sendImage(jid: string, image: Buffer, caption?: string): Promise<void> {
+  public async deleteLastMessage(jid: string): Promise<string> {
+    const key = this.lastMessageKeys.get(jid);
+    if (!key) {
+      return "No recent message found to delete.";
+    }
+
+    await this.deleteMessage(jid, key);
+    this.lastMessageKeys.delete(jid);
+    return "Last message deleted.";
+  }
+
+  public async deleteMessage(jid: string, key: any): Promise<void> {
+    if (!this.sock) return;
+    try {
+      await this.sock.sendMessage(jid, { delete: key });
+      console.log(`🗑️ Deleted message in ${jid}`);
+    } catch (error) {
+      console.error(`❌ Failed to delete message:`, error);
+    }
+  }
+
+  public async sendImage(jid: string, image: Buffer, caption?: string): Promise<any> {
     if (!this.sock) {
       console.warn('⚠️ Cannot send image: Client not initialized');
       return;
@@ -676,7 +708,7 @@ export class WhatsAppClient {
         setTimeout(() => reject(new Error('Send image timeout (300s)')), 300000)
       );
 
-      await Promise.race([
+      const sentMsg = await Promise.race([
         this.sock.sendMessage(jid, {
           image,
           caption,
@@ -685,7 +717,11 @@ export class WhatsAppClient {
         timeoutPromise
       ]);
 
+      if (sentMsg?.key) {
+        this.lastMessageKeys.set(jid, sentMsg.key);
+      }
       console.log(`✅ Image sent to ${jid}`);
+      return sentMsg;
     } catch (error) {
       console.error(`❌ Error sending image to ${jid}:`, error);
       throw error;

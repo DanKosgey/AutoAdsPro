@@ -286,6 +286,15 @@ export const AI_TOOLS = [
                     properties: {},
                     required: []
                 }
+            },
+            {
+                name: "delete_last_message",
+                description: "Delete the last message sent by the agent in the current chat. Use this to correct mistakes or when the user asks to delete the last message.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {},
+                    required: []
+                }
             }
         ]
     }
@@ -301,6 +310,23 @@ export async function executeLocalTool(name: string, args: any, context: any) {
     console.log(`🛠️ Executing Tool: ${name}`, args);
 
     switch (name) {
+        case 'delete_last_message':
+            try {
+                const client = context?.client;
+                if (!client) {
+                    return { error: "WhatsApp Client not available. Cannot delete." };
+                }
+                const jid = context?.msg?.key?.remoteJid;
+                if (!jid) {
+                    return { error: "Could not determine current chat JID." };
+                }
+
+                const result = await client.deleteLastMessage(jid);
+                return { result: `🗑️ ${result}` };
+            } catch (e: any) {
+                return { error: `Delete failed: ${e.message}` };
+            }
+
         case 'update_contact_info':
             try {
                 const { name, summary_addition, trust_level } = args;

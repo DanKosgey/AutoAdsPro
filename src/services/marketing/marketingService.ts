@@ -411,28 +411,38 @@ export class MarketingService {
                 // Update Timestamp immediately to block other concurrent campaigns
                 this.lastGroupPostTime.set(groupJid, now);
 
+                const { ephemeralAdsService } = require('./ephemeralAdsService'); // Lazy import
+
                 if (ad.imagePath && !forceTextOnly) {
                     console.log(`📸 Sending image ad to ${groupJid}...`);
                     try {
                         const fs = require('fs');
                         const buffer = fs.readFileSync(ad.imagePath);
 
-                        await client.sendImage(groupJid, buffer, ad.text);
+                        const sentMsg = await client.sendImage(groupJid, buffer, ad.text);
+                        if (sentMsg?.key) {
+                            ephemeralAdsService.trackAd(groupJid, sentMsg.key, 120); // 2 hours TTL
+                        }
                         console.log(`✅ Image ad sent to ${groupJid}`);
                     } catch (imgError: any) {
                         console.error(`⚠️ Failed to send image to ${groupJid}, sending text fallback. Error:`, imgError.message);
-                        // Only fallback if image send specifically failed (e.g., file error, upload error)
-                        // Note: If timeout occurs in client.sendImage, it throws.
-                        await client.sendText(groupJid, `(Image unavailable)\n\n${ad.text}`);
+                        // Only fallback if image send specifically failed
+                        const sentFallback = await client.sendText(groupJid, `(Image unavailable)\n\n${ad.text}`);
+                        if (sentFallback?.key) {
+                            ephemeralAdsService.trackAd(groupJid, sentFallback.key, 120);
+                        }
                         console.log(`✅ Fallback text ad sent to ${groupJid}`);
                     }
                 } else {
                     console.log(`📝 Sending text ad to ${groupJid}...`);
-                    await client.sendText(groupJid, ad.text);
+                    const sentMsg = await client.sendText(groupJid, ad.text);
+                    if (sentMsg?.key) {
+                        ephemeralAdsService.trackAd(groupJid, sentMsg.key, 120);
+                    }
                     console.log(`✅ Text ad sent to ${groupJid}`);
                 }
 
-                // Increased delay between groups for reliability and to avoid WhatsApp rate limits
+                // Increased delay between groups for reliability
                 if (groups.indexOf(groupJid) < groups.length - 1) {
                     await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
                 }
