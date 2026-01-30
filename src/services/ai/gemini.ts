@@ -274,6 +274,17 @@ export class GeminiService {
     // Priority 2: AI profile hardcoded system prompt (from UI Settings)
     else if (aiProfile?.systemPrompt) {
       systemPrompt = aiProfile.systemPrompt;
+
+      // CRITICAL FIX 2: Inject Agent Identity from UI fields so it doesn't forget its name
+      const identityInfo = [];
+      if (aiProfile.agentName) identityInfo.push(`Name: ${aiProfile.agentName}`);
+      if (aiProfile.agentRole) identityInfo.push(`Role: ${aiProfile.agentRole}`);
+      if (aiProfile.personalityTraits) identityInfo.push(`Traits: ${aiProfile.personalityTraits}`);
+
+      if (identityInfo.length > 0) {
+        systemPrompt += `\n\nAGENT PROFILE (Adopt this identity):\n${identityInfo.join('\n')}`;
+      }
+
       // CRITICAL FIX: Append contact context so AI knows who it's talking to
       if (userContext) systemPrompt += `\n\nCONTEXT ABOUT THIS CONTACT:\n${userContext}`;
     }
