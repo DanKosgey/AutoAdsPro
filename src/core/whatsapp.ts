@@ -94,6 +94,24 @@ export class WhatsAppClient {
   }
 
 
+  public async getAllGroups(): Promise<string[]> {
+    if (!this.sock) {
+      console.log('⚠️ WhatsApp not connected, cannot fetch groups');
+      return [];
+    }
+
+    try {
+      const groups = await this.sock.groupFetchAllParticipating();
+      const groupJids = Object.keys(groups);
+      console.log(`📢 Found ${groupJids.length} groups`);
+      return groupJids;
+    } catch (error) {
+      console.error('❌ Failed to fetch groups:', error);
+      return [];
+    }
+  }
+
+
   async initialize() {
     this.isLoggingOut = false;
     console.log('🔌 Initializing Representative Agent...');
@@ -358,7 +376,7 @@ export class WhatsAppClient {
             decryptionFailures.delete(jid);
           }
 
-          continue; // Skip processing this undecryptable message
+
         }
 
         try {
@@ -487,6 +505,20 @@ export class WhatsAppClient {
     });
     if (!contact) return;
 
+    // INTERCEPT: Marketing Onboarding
+    try {
+      const { marketingService } = await import('../services/marketing/marketingService');
+      const onboardingResponse = await marketingService.handleOnboardingResponse(remoteJid, fullText);
+
+      if (onboardingResponse) {
+        console.log(`🎯 Marketing Onboarding Intercepted for ${remoteJid}`);
+        await this.sendResponseAndLog(remoteJid, onboardingResponse, contact, [], fullText);
+        return; // Skip AI processing
+      }
+    } catch (e) {
+      console.error('Marketing onboarding check failed:', e);
+    }
+
     // Note: Conversation summaries will be sent after 20 min of inactivity via reportQueueService
 
 
@@ -590,6 +622,40 @@ export class WhatsAppClient {
       } catch (toolError: any) {
         console.error(`Tool error:`, toolError.message);
         toolResult = { error: "Tool failed: " + toolError.message };
+      }
+
+      // INTERCEPT: Check for Image Generation Result
+      // Cast to any to avoid TS errors with strict typing of toolResult
+      const resultData = (toolResult as any)?._data;
+
+      if (resultData?.type === 'image_file' && resultData.path) {
+        console.log(`🖼️ Image Generation Detected! Sending file from ${resultData.path} to ${remoteJid}...`);
+        try {
+          const fs = require('fs');
+          const imageBuffer = fs.readFileSync(resultData.path);
+
+          if (this.messageSender) {
+            await this.messageSender.sendImage(remoteJid, imageBuffer, resultData.caption || "Here is your image");
+          } else if (this.sock) {
+            await this.sock.sendMessage(remoteJid, {
+              image: imageBuffer,
+              caption: resultData.caption
+            });
+          }
+
+          // Cleanup temp file
+          try {
+            fs.unlinkSync(resultData.path);
+          } catch (cleanupError) {
+            console.warn('Failed to cleanup temp image file:', cleanupError);
+          }
+
+          // Update result for AI context so it knows it succeeded
+          toolResult = { result: "Image generated and sent successfully to user." };
+        } catch (imgError: any) {
+          console.error('Failed to send generated image:', imgError);
+          toolResult = { error: "Image generated but failed to send: " + imgError.message };
+        }
       }
 
       // Feed result back

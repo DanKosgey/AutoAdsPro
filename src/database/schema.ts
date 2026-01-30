@@ -188,3 +188,75 @@ export const reportQueue = pgTable('report_queue', {
     };
 });
 
+// 11. Marketing: Business Profile (Onboarding Data)
+export const businessProfile = pgTable('business_profile', {
+    id: serial('id').primaryKey(),
+    productInfo: text('product_info').notNull(), // "What do you sell?"
+    targetAudience: text('target_audience').notNull(), // "Who is it for?"
+    uniqueSellingPoint: text('unique_selling_point').notNull(), // "Why you?"
+    brandVoice: text('brand_voice').default('professional'), // "Casual", "Luxury", etc.
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// 12. Marketing: Random Facts Library
+export const facts = pgTable('facts', {
+    id: serial('id').primaryKey(),
+    content: text('content').notNull(), // The actual fact text
+    category: varchar('category', { length: 50 }).notNull(), // 'product_adjacent', 'audience_interest', 'universal'
+    tier: varchar('tier', { length: 20 }).notNull(), // 'tier1', 'tier2', 'tier3'
+    tags: jsonb('tags'), // Array of keywords
+    source: text('source'), // Optional source citation
+    usedCount: integer('used_count').default(0), // How many times posted
+    lastUsedAt: timestamp('last_used_at'),
+    createdAt: timestamp('created_at').defaultNow(),
+}, (table) => {
+    return {
+        categoryIdx: index('fact_category_idx').on(table.category),
+        tierIdx: index('fact_tier_idx').on(table.tier),
+    };
+});
+
+// 13. Marketing: Campaigns
+export const marketingCampaigns = pgTable('marketing_campaigns', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(), // e.g., "Weekly Automation"
+    status: varchar('status', { length: 20 }).default('active'), // 'active', 'paused', 'completed'
+    startDate: timestamp('start_date').defaultNow(),
+    endDate: timestamp('end_date'),
+
+    // Posting Times (configurable via UI)
+    morningTime: varchar('morning_time', { length: 5 }).default('07:00'), // HH:MM format
+    afternoonTime: varchar('afternoon_time', { length: 5 }).default('13:00'),
+    eveningTime: varchar('evening_time', { length: 5 }).default('19:00'),
+
+    settings: jsonb('settings'), // Flexible config
+    createdAt: timestamp('created_at').defaultNow(),
+});
+
+// 14. Marketing: Scheduled Posts (Queue)
+export const scheduledPosts = pgTable('scheduled_posts', {
+    id: serial('id').primaryKey(),
+    campaignId: integer('campaign_id').references(() => marketingCampaigns.id),
+    type: varchar('type', { length: 20 }).notNull(), // 'ad', 'fact_text', 'fact_image'
+    content: text('content').notNull(), // The ad copy or fact text
+    mediaUrl: text('media_url'), // Local path or URL for images
+    scheduledTime: timestamp('scheduled_time').notNull(),
+    status: varchar('status', { length: 20 }).default('pending'), // 'pending', 'sent', 'failed'
+    platform: varchar('platform', { length: 20 }).default('whatsapp'), // Target platform
+    metadata: jsonb('metadata'), // Store framework used, fact ID, etc.
+    createdAt: timestamp('created_at').defaultNow(),
+}, (table) => {
+    return {
+        statusTimeIdx: index('sched_status_time_idx').on(table.status, table.scheduledTime),
+    };
+});
+
+// 15. Marketing: Content Templates (Ad Frameworks)
+export const contentTemplates = pgTable('content_templates', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(), // 'PAS', 'AIDA', 'Story'
+    structure: text('structure').notNull(), // Description of structure for AI
+    examples: text('examples'), // Few-shot examples
+    createdAt: timestamp('created_at').defaultNow(),
+});

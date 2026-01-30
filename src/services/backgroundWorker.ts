@@ -16,7 +16,7 @@ export class BackgroundWorker {
     /**
      * Start background queue processing
      */
-    start(): void {
+    async start(): Promise<void> {
         if (this.isRunning) {
             console.log('⚠️ BackgroundWorker already running');
             return;
@@ -54,16 +54,23 @@ export class BackgroundWorker {
             }
         }, 60 * 60 * 1000); // 1 hour
 
+        // Start Marketing Scheduler
+        const { WhatsAppClient } = await import('../core/whatsapp');
+        const { schedulerService } = await import('./schedulerService');
+        const whatsappClient = new WhatsAppClient(); // Get existing instance if possible
+        schedulerService.start(whatsappClient);
+
         console.log('✅ BackgroundWorker started');
         console.log('   - Message queue: every 10s');
         console.log('   - Report queue: every 30s');
         console.log('   - Cleanup: every 1h');
+        console.log('   - Marketing Scheduler: active');
     }
 
     /**
      * Stop background processing
      */
-    stop(): void {
+    async stop(): Promise<void> {
         if (!this.isRunning) {
             return;
         }
@@ -84,6 +91,10 @@ export class BackgroundWorker {
             clearInterval(this.cleanupInterval);
             this.cleanupInterval = null;
         }
+
+        // Stop Marketing Scheduler
+        const { schedulerService } = await import('./schedulerService');
+        schedulerService.stop();
 
         this.isRunning = false;
         console.log('✅ BackgroundWorker stopped');

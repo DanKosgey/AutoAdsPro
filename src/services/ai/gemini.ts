@@ -538,6 +538,21 @@ ${history.join('\n')}
     }
   }
 
+  /**
+   * Generates generic text response from a prompt (for marketing/facts)
+   */
+  async generateText(prompt: string): Promise<string> {
+    try {
+      return await this.executeWithRetry(async (model) => {
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+      });
+    } catch (error) {
+      console.error('Gemini Text Generation Error:', error);
+      return "";
+    }
+  }
+
   // --------------------------------------------------------------------------
   // RESPONSE BUILDERS
   // --------------------------------------------------------------------------

@@ -130,6 +130,9 @@ function loadPageData(page) {
         case 'user-profile':
             loadUserProfile();
             break;
+        case 'marketing':
+            loadMarketing();
+            break;
         case 'settings':
             loadSettings();
             break;
@@ -1104,3 +1107,173 @@ loadUserProfile = async function () {
     await originalLoadUserProfile();
     initializeTimezonePicker();
 };
+
+// ==========================================
+// MARKETING DASHBOARD LOGIC
+// ==========================================
+
+function loadMarketing() {
+    loadMarketingProfile();
+}
+
+async function loadMarketingProfile() {
+    try {
+        const response = await fetch(`${API_BASE}/api/marketing/profile`);
+        const profile = await response.json();
+
+        // Populate fields
+        document.getElementById('marketing-product-info').value = profile.productInfo || '';
+        document.getElementById('marketing-target-audience').value = profile.targetAudience || '';
+        document.getElementById('marketing-usp').value = profile.uniqueSellingPoint || '';
+        document.getElementById('marketing-brand-voice').value = profile.brandVoice || 'professional';
+
+        // Add Listeners
+        const saveBtn = document.getElementById('save-marketing-profile');
+        // Remove old listener to prevent duplicates if function called multiple times
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        newSaveBtn.addEventListener('click', saveMarketingProfile);
+
+        const createBtn = document.getElementById('create-campaign-btn');
+        const newCreateBtn = createBtn.cloneNode(true);
+        createBtn.parentNode.replaceChild(newCreateBtn, createBtn);
+        newCreateBtn.addEventListener('click', createCampaign);
+
+    } catch (error) {
+        console.error('Failed to load marketing profile:', error);
+        alert('Failed to load marketing profile');
+    }
+}
+
+async function saveMarketingProfile() {
+    const btn = document.getElementById('save-marketing-profile');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    try {
+        const data = {
+            productInfo: document.getElementById('marketing-product-info').value,
+            targetAudience: document.getElementById('marketing-target-audience').value,
+            uniqueSellingPoint: document.getElementById('marketing-usp').value,
+            brandVoice: document.getElementById('marketing-brand-voice').value
+        };
+
+        const response = await fetch(`${API_BASE}/api/marketing/profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            btn.textContent = 'Saved ✓';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }, 2000);
+            alert('Marketing Profile saved! The AI will use this for future ads.');
+        } else {
+            throw new Error(result.error || 'Save failed');
+        }
+    } catch (error) {
+        console.error('Failed to save marketing profile:', error);
+        alert('Failed to save: ' + error.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function createCampaign() {
+    const nameInput = document.getElementById('marketing-campaign-name');
+    const name = nameInput.value || 'New Campaign';
+    const statusMsg = document.getElementById('campaign-status-msg');
+    const btn = document.getElementById('create-campaign-btn');
+
+    // Get posting times
+    const morningTime = document.getElementById('marketing-morning-time').value || '07:00';
+    const afternoonTime = document.getElementById('marketing-afternoon-time').value || '13:00';
+    const eveningTime = document.getElementById('marketing-evening-time').value || '19:00';
+
+    btn.textContent = 'Creating...';
+    btn.disabled = true;
+    statusMsg.textContent = 'Initializing campaign...';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/marketing/campaign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                morningTime,
+                afternoonTime,
+                eveningTime
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            btn.textContent = 'Started ✓';
+            statusMsg.textContent = result.message;
+            statusMsg.style.color = 'var(--success)';
+
+            setTimeout(() => {
+                btn.textContent = 'Start Campaign';
+                btn.disabled = false;
+            }, 3000);
+        } else {
+            throw new Error(result.error || 'Creation failed');
+        }
+    } catch (error) {
+        console.error('Failed to create campaign:', error);
+        statusMsg.textContent = 'Error: ' + error.message;
+        statusMsg.style.color = 'var(--danger)';
+        btn.textContent = 'Start Campaign';
+        btn.disabled = false;
+    }
+}
+
+// Refresh Groups List
+async function refreshGroups() {
+    const btn = document.getElementById('refresh-groups-btn');
+    const groupsList = document.getElementById('groups-list');
+
+    btn.textContent = '⏳ Loading...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE}/api/marketing/groups`);
+        const result = await response.json();
+
+        if (result.success && result.groups) {
+            if (result.groups.length === 0) {
+                groupsList.innerHTML = '<p style="color: #6b7280; text-align: center;">No groups found. Add the bot to WhatsApp groups first.</p>';
+            } else {
+                groupsList.innerHTML = result.groups.map((group, index) => `
+                    <div style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--text-primary);">${group.name || 'Unknown Group'}</strong>
+                            <br>
+                            <small style="color: #6b7280;">${group.id}</small>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                                ${group.participants || 0} members
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            throw new Error(result.error || 'Failed to fetch groups');
+        }
+    } catch (error) {
+        console.error('Failed to refresh groups:', error);
+        groupsList.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+    } finally {
+        btn.textContent = '🔄 Refresh Groups';
+        btn.disabled = false;
+    }
+}

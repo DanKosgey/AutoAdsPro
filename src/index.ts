@@ -5,7 +5,7 @@ import { config } from './config/env';
 import { WhatsAppClient } from './core/whatsapp';
 import { TelegramClient } from './core/telegram';
 import { db, testConnection } from './database';
-import { contacts, messageLogs, authCredentials, aiProfile, userProfile } from './database/schema';
+import { contacts, messageLogs, authCredentials, aiProfile, userProfile, businessProfile } from './database/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { sessionManager } from './services/sessionManager';
 
@@ -411,6 +411,106 @@ app.put('/api/user-profile', async (req, res) => {
     } catch (error) {
         console.error('Failed to update user profile:', error);
         res.status(500).json({ error: 'Failed to update user profile' });
+    }
+});
+
+// Marketing Endpoints
+app.get('/api/marketing/profile', async (req, res) => {
+    try {
+        const profile = await db.select().from(businessProfile).then(rows => rows[0]);
+
+        if (!profile) {
+            return res.json({
+                productInfo: '',
+                targetAudience: '',
+                uniqueSellingPoint: '',
+                brandVoice: 'professional'
+            });
+        }
+        res.json(profile);
+    } catch (error) {
+        console.error('Failed to fetch marketing profile:', error);
+        res.status(500).json({ error: 'Failed to fetch marketing profile' });
+    }
+});
+
+app.put('/api/marketing/profile', async (req, res) => {
+    try {
+        const { productInfo, targetAudience, uniqueSellingPoint, brandVoice } = req.body;
+        const existing = await db.select().from(businessProfile).then(rows => rows[0]);
+
+        let result;
+        if (existing) {
+            result = await db.update(businessProfile)
+                .set({
+                    productInfo,
+                    targetAudience,
+                    uniqueSellingPoint,
+                    brandVoice,
+                    updatedAt: new Date()
+                })
+                .where(eq(businessProfile.id, existing.id))
+                .returning();
+        } else {
+            result = await db.insert(businessProfile)
+                .values({
+                    productInfo,
+                    targetAudience,
+                    uniqueSellingPoint,
+                    brandVoice
+                })
+                .returning();
+        }
+        res.json({ success: true, profile: result[0] });
+    } catch (error) {
+        console.error('Failed to update marketing profile:', error);
+        res.status(500).json({ error: 'Failed to update marketing profile' });
+    }
+});
+
+app.post('/api/marketing/campaign', async (req, res) => {
+    try {
+        const { marketingService } = await import('./services/marketing/marketingService');
+        const { name, morningTime, afternoonTime, eveningTime } = req.body;
+        const result = await marketingService.createCampaign(name, morningTime, afternoonTime, eveningTime);
+        res.json({ success: true, message: result });
+    } catch (error) {
+        console.error('Failed to create campaign:', error);
+        res.status(500).json({ error: 'Failed to create campaign' });
+    }
+});
+
+app.get('/api/marketing/groups', async (req, res) => {
+    try {
+        if (!whatsappClient) {
+            return res.json({ success: false, error: 'WhatsApp client not initialized' });
+        }
+
+        const groupJids = await whatsappClient.getAllGroups();
+
+        // Fetch group metadata for each group
+        const groups = await Promise.all(groupJids.map(async (jid: string) => {
+            try {
+                const metadata = await whatsappClient['sock']?.groupMetadata(jid);
+                return {
+                    id: jid,
+                    name: metadata?.subject || 'Unknown Group',
+                    participants: metadata?.participants?.length || 0
+                };
+            } catch (error) {
+                console.error(`Failed to fetch metadata for ${jid}:`, error);
+                return {
+                    id: jid,
+                    name: 'Unknown Group',
+                    participants: 0
+                };
+            }
+        }));
+
+        res.json({ success: true, groups });
+    } catch (error) {
+        console.error('Failed to fetch groups:', error);
+        res.status(500).json({ error: 'Failed to fetch groups' });
     }
 });
 

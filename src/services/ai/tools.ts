@@ -9,6 +9,8 @@ import { messageLogs, contacts } from '../../database/schema';
 import { ilike, desc, eq } from 'drizzle-orm';
 import * as ownerTools from './ownerTools';
 import { webScraper } from '../webScraper';
+import { googleImageGenerationService } from '../googleImageGeneration';
+import { marketingCampaigns } from '../../database/schema';
 
 export const AI_TOOLS = [
     {
@@ -36,6 +38,17 @@ export const AI_TOOLS = [
                         time_range: { type: "STRING", description: "Time range (e.g. 'morning', '2pm-4pm')." }
                     },
                     required: ["day"]
+                }
+            },
+            {
+                name: "generate_image",
+                description: "Generate an image based on a text prompt. Use this when the user asks for a picture, photo, drawing, or visual representation.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        prompt: { type: "STRING", description: "Detailed visual description of the image to generate." }
+                    },
+                    required: ["prompt"]
                 }
             },
             {
@@ -200,6 +213,37 @@ export const AI_TOOLS = [
                     },
                     required: ["query"]
                 }
+            },
+            {
+                name: "start_marketing_onboarding",
+                description: "Start the setup interview for the AI Marketing Agent (AutoAdsPro). Use this when the user says 'setup marketing', 'start AutoAdsPro', or wants to configure their business profile.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {},
+                    required: []
+                }
+            },
+            {
+                name: "create_campaign",
+                description: "Create a new weekly marketing campaign. Use this after onboarding is complete.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        name: { type: "STRING", description: "Name of the campaign (default 'AutoAds Weekly')." }
+                    },
+                    required: []
+                }
+            },
+            {
+                name: "post_now",
+                description: "Force the agent to generate and post a marketing message (Ad or Fact) immediately. Useful for testing or manual overrides.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        type: { type: "STRING", description: "Type of post: 'ad_morning', 'ad_afternoon', 'ad_evening', 'fact_morning', 'fact_afternoon', 'fact_evening'." }
+                    },
+                    required: ["type"]
+                }
             }
         ]
     }
@@ -276,6 +320,26 @@ export async function executeLocalTool(name: string, args: any, context: any) {
 
         case 'get_recent_conversations':
             return { result: await ownerTools.getRecentConversations(args.limit || 10) };
+
+        case 'generate_image':
+            try {
+                const { prompt } = args;
+                console.log(`🎨 Generating image for prompt: "${prompt}"`);
+                const imagePath = await googleImageGenerationService.generateImage(prompt);
+
+                // Return a special object for the client to handle file upload
+                return {
+                    result: `[IMAGE_GENERATED]`,
+                    _data: {
+                        type: 'image_file', // Changed to image_file to denote local path
+                        path: imagePath,
+                        caption: prompt
+                    }
+                };
+            } catch (e: any) {
+                console.error('Image generation error:', e);
+                return { error: `Failed to generate image: ${e.message}` };
+            }
 
         case 'get_system_status':
             return { result: await ownerTools.getSystemStatus() };
@@ -394,6 +458,84 @@ export async function executeLocalTool(name: string, args: any, context: any) {
             } catch (e: any) {
                 console.error('Search web error:', e.message);
                 return { error: `Failed to search web: ${e.message}` };
+            }
+
+        // AGENT MARKETING TOOLS
+        case 'start_marketing_onboarding':
+            try {
+                const { marketingService } = await import('../marketing/marketingService');
+                const phone = context?.contact?.phone;
+                if (!phone) return { error: "No contact phone found." };
+
+                const response = await marketingService.startOnboarding(phone);
+                return { result: response };
+            } catch (e: any) {
+                return { error: `Onboarding failed: ${e.message}` };
+            }
+
+        case 'create_campaign':
+            try {
+                const { marketingService } = await import('../marketing/marketingService');
+                const response = await marketingService.createCampaign(args.name);
+                return { result: response };
+            } catch (e: any) {
+                return { error: `Campaign creation failed: ${e.message}` };
+            }
+
+        case 'post_now':
+            try {
+                const { marketingService } = await import('../marketing/marketingService');
+                // We need the client to post. In executeLocalTool we might not have it unless passed in context.
+                // But executeLocalTool is usually called by Gemini, and we return text.
+                // However, executeMarketingSlot posts independently.
+                // We'll try to find a way to access the client, or just trigger the logic and return a status.
+                // For now, we'll try to use the global client if available or just log it.
+
+                // Hack: We can't easily get the client here if it's not in context.
+                // But scheduler has it.
+                // We'll rely on the fact that for 'post_now', we want to see the result in the chat flow.
+                // Actually, executeMarketingSlot sends a NEW message. 
+                // If we want to return it to the CURRENT conversation, we should just generate it and return it as the tool result.
+
+                // Let's modify executeMarketingSlot logic to be reusable?
+                // Or just generate the content here and return it.
+
+                const { adContentService } = await import('../marketing/adContentService');
+                const { factService } = await import('../marketing/factService');
+
+                if (args.type.startsWith('ad')) {
+                    // Get active campaign id? Or just generate
+                    const campaign = await db.query.marketingCampaigns.findFirst({ where: eq(marketingCampaigns.status, 'active') });
+                    if (!campaign) return { error: "No active campaign." };
+
+                    let style = 'balanced';
+                    if (args.type.includes('morning')) style = 'energetic';
+                    else if (args.type.includes('afternoon')) style = 'practical';
+                    else if (args.type.includes('evening')) style = 'relaxed';
+
+                    const ad = await adContentService.generateAd(campaign.id, style);
+
+                    if (ad.imagePath) {
+                        return {
+                            result: `[AD GENERATED] \nText: ${ad.text}`,
+                            _data: {
+                                type: 'image_file',
+                                path: ad.imagePath,
+                                caption: ad.text
+                            }
+                        };
+                    }
+                    return { result: ad.text };
+                } else {
+                    let time = 'morning';
+                    if (args.type.includes('afternoon')) time = 'afternoon';
+                    if (args.type.includes('evening')) time = 'evening';
+
+                    const fact = await factService.getSmartFact(time as any);
+                    return { result: `🎲 *Random Fact*\n\n${fact}` };
+                }
+            } catch (e: any) {
+                return { error: `Post now failed: ${e.message}` };
             }
 
         default:

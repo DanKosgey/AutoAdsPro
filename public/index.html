@@ -78,6 +78,13 @@
                     </svg>
                     <span>Contacts</span>
                 </a>
+                <a href="#" class="nav-item" data-page="marketing">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                            d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                    <span>Marketing</span>
+                </a>
                 <a href="#" class="nav-item" data-page="ai-profile">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M13 7H7v6h6V7z" />
@@ -736,6 +743,122 @@
                             <textarea id="user-background" rows="4"
                                 placeholder="Any additional context that helps the AI understand you better..."></textarea>
                             <small>This information helps the AI provide more personalized responses</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Marketing Page -->
+            <div class="page" id="marketing-page">
+                <header class="page-header">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                            </svg>
+                        </button>
+                        <h2>📈 Marketing Manager</h2>
+                    </div>
+                    <button class="btn-primary" id="save-marketing-profile">Save Changes</button>
+                </header>
+
+                <div class="profile-container">
+                    <!-- Business Profile Section -->
+                    <div class="profile-section">
+                        <h3>Business Profile</h3>
+                        <div class="form-group">
+                            <label>Product/Service Info</label>
+                            <textarea id="marketing-product-info" rows="3"
+                                placeholder="What do you sell? e.g. Handmade organic soaps"></textarea>
+                            <small>Describe your product or service clearly.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Audience</label>
+                            <textarea id="marketing-target-audience" rows="2"
+                                placeholder="e.g. Eco-conscious moms, tech professionals"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Unique Selling Point (USP)</label>
+                            <textarea id="marketing-usp" rows="2"
+                                placeholder="e.g. 100% organic ingredients, free shipping"></textarea>
+                            <small>Why should people buy from you?</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Brand Voice</label>
+                            <select id="marketing-brand-voice">
+                                <option value="professional">Professional</option>
+                                <option value="friendly">Friendly & Casual</option>
+                                <option value="luxury">Luxury & Exclusive</option>
+                                <option value="humorous">Witty & Humorous</option>
+                                <option value="urgent">Urgent & Sales-heavy</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Campaign Manager Section -->
+                    <div class="profile-section">
+                        <div class="settings-section-header">
+                            <div class="settings-icon"
+                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path
+                                        d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+                                    <path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>Campaign Manager</h3>
+                                <p>Manage your automated ad campaigns</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Active Campaign</label>
+                            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem;">
+                                <input type="text" id="marketing-campaign-name"
+                                    placeholder="Campaign Name (e.g. Weekly Promo)" style="flex: 1;">
+                                <button class="btn-primary" id="create-campaign-btn">Start Campaign</button>
+                            </div>
+                            <small id="campaign-status-msg"
+                                style="color: var(--text-secondary); margin-top: 0.5rem; display: block;"></small>
+                        </div>
+
+                        <!-- Posting Times Configuration -->
+                        <div class="form-group">
+                            <label>Posting Times</label>
+                            <small style="display: block; margin-bottom: 0.5rem;">Configure when ads should be sent to
+                                groups</small>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                                <div>
+                                    <label style="font-size: 0.875rem; color: #6b7280;">Morning</label>
+                                    <input type="time" id="marketing-morning-time" value="07:00"
+                                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; color: #6b7280;">Afternoon</label>
+                                    <input type="time" id="marketing-afternoon-time" value="13:00"
+                                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.875rem; color: #6b7280;">Evening</label>
+                                    <input type="time" id="marketing-evening-time" value="19:00"
+                                        style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Groups Viewer Section -->
+                        <div class="form-group">
+                            <label>WhatsApp Groups</label>
+                            <small style="display: block; margin-bottom: 0.5rem;">Groups the bot is currently in
+                                (auto-detected)</small>
+                            <button class="btn-primary" id="refresh-groups-btn" onclick="refreshGroups()"
+                                style="margin-bottom: 1rem;">
+                                🔄 Refresh Groups
+                            </button>
+                            <div id="groups-list"
+                                style="max-height: 300px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 1rem;">
+                                <p style="color: #6b7280; text-align: center;">Click "Refresh Groups" to load</p>
+                            </div>
                         </div>
                     </div>
                 </div>
