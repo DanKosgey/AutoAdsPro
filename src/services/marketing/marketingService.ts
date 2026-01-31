@@ -11,7 +11,7 @@ export class MarketingService {
 
     // Global Cooldown Map to prevent double-posting to the same group (e.g. from multiple campaigns triggering at once)
     private lastGroupPostTime: Map<string, number> = new Map();
-    private readonly GROUP_COOLDOWN_MS = 30 * 1000; // 30 seconds
+    private readonly GROUP_COOLDOWN_MS = 15 * 60 * 1000; // 15 Minutes
 
     private constructor() { }
 
