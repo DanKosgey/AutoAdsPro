@@ -1,15 +1,30 @@
 import { geminiService } from '../ai/gemini';
 
-type ContentType = 'quote' | 'joke' | 'prediction' | 'fact' | 'riddle' | 'wisdom';
+type ContentType = 'quote' | 'joke' | 'prediction' | 'fact' | 'riddle' | 'wisdom' | 'hack' | 'luxury_insight';
+
+// 20+ Topics focusing on Money, Luxury, Success, and "Cool" stuff
+const TOPICS = [
+    'Old Money Aesthetic', 'Crypto Whales', 'Supercars', 'Minimalist Architecture',
+    'Biohacking', 'High-Frequency Trading', 'Swiss Watches', 'Private Jets',
+    'Artificial Intelligence', 'Space Travel', 'Meditation for CEOs', 'Stoicism',
+    'Compound Interest', 'Deep Work', 'Neuromarketing', 'Psychology of Power',
+    'Exotic Travel Destinations', 'Fine Art Collecting', 'Whiskey & Cigars',
+    'Digital Nomad Lifestyle', 'Legacy Building', 'Smart Home Tech', 'Bespoke Tailoring',
+    'Yachting', 'Michelin Star Dining', 'Angel Investing', 'Quant Finance', 'Global Macro Economics'
+] as const;
+
+type Topic = typeof TOPICS[number];
 
 interface RandomContent {
     type: ContentType;
     content: string;
+    topic?: string;
 }
 
 class RandomContentService {
     private static instance: RandomContentService;
     private lastContentType: ContentType | null = null;
+    private lastTopic: Topic | null = null;
 
     private constructor() { }
 
@@ -24,7 +39,7 @@ class RandomContentService {
      * Get a random content type, ensuring variety (no repeats)
      */
     private getRandomContentType(): ContentType {
-        const types: ContentType[] = ['quote', 'joke', 'prediction', 'fact', 'riddle', 'wisdom'];
+        const types: ContentType[] = ['quote', 'joke', 'prediction', 'fact', 'riddle', 'wisdom', 'hack', 'luxury_insight'];
 
         // Filter out the last type to ensure variety
         const availableTypes = this.lastContentType
@@ -37,19 +52,32 @@ class RandomContentService {
     }
 
     /**
+     * Get a random topic, ensuring variety
+     */
+    private getRandomTopic(): Topic {
+        const availableTopics = this.lastTopic
+            ? TOPICS.filter(t => t !== this.lastTopic)
+            : TOPICS;
+
+        const selected = availableTopics[Math.floor(Math.random() * availableTopics.length)];
+        this.lastTopic = selected;
+        return selected;
+    }
+
+    /**
      * Get time-aware context for AI generation
      */
     private getTimeContext(): string {
         const hour = new Date().getHours();
 
         if (hour >= 5 && hour < 12) {
-            return 'morning (energetic, fresh start vibes)';
+            return 'morning (hustle mode, fresh coffee, ambition)';
         } else if (hour >= 12 && hour < 17) {
-            return 'afternoon (productive, focused energy)';
+            return 'afternoon (execution, closing deals, focus)';
         } else if (hour >= 17 && hour < 21) {
-            return 'evening (winding down, reflective)';
+            return 'evening (networking, leisure, luxury dining)';
         } else {
-            return 'late night (calm, thoughtful, maybe mysterious)';
+            return 'late night (scheming, vision, deep thought)';
         }
     }
 
@@ -58,51 +86,70 @@ class RandomContentService {
      */
     public async generateRandomContent(): Promise<RandomContent> {
         const type = this.getRandomContentType();
+        const topic = this.getRandomTopic();
         const timeContext = this.getTimeContext();
 
+        const baseInstruction = `You are a sophisticated, successful, and slightly witty AI assistant for a high-net-worth individual. 
+        Topic: ${topic}
+        Time Context: ${timeContext}
+        Tone: Cool, confident, brief, and engaging. Avoid cliché "hustle culture" cringe.
+        Output: ONLY the content text.`;
+
         const prompts: Record<ContentType, string> = {
-            quote: `Generate a SHORT, powerful motivational quote (1-2 sentences max).
-                    Time: ${timeContext}
-                    Make it punchy, memorable, and inspiring. No author attribution needed.
-                    Format: Just the quote, nothing else.`,
+            quote: `${baseInstruction}
+                    Generate a powerful, obscure, or highly relevant quote about ${topic}.
+                    It should feel like insider knowledge or timeless wisdom.
+                    Max 20 words.`,
 
-            joke: `Generate a SHORT, clever joke or witty one-liner (1-2 sentences max).
-                   Time: ${timeContext}
-                   Make it smart, clean, and genuinely funny. Could be a pun, observation, or quick story.
-                   Format: Just the joke, no setup labels.`,
+            joke: `${baseInstruction}
+                   Generate a sophisticated, dry-humor joke or witty observation about ${topic}.
+                   Something a CEO might chuckle at.
+                   Max 20 words.`,
 
-            prediction: `Generate a SHORT, fun "prediction" or fortune (1-2 sentences max).
-                        Time: ${timeContext}
-                        Make it playful, slightly mysterious, and positive. Like a fortune cookie but cooler.
-                        Format: Start with "🔮" then the prediction.`,
+            prediction: `${baseInstruction}
+                        Make a bold, fun, or slightly futuristic prediction about ${topic}.
+                        Start with "🔮 Prediction:".
+                        Max 20 words.`,
 
-            fact: `Generate a SHORT, mind-blowing fact (1-2 sentences max).
-                   Time: ${timeContext}
-                   Make it surprising, interesting, and true. Could be about science, history, nature, or psychology.
-                   Format: Start with "💡" then the fact.`,
+            fact: `${baseInstruction}
+                   Share a mind-blowing, little-known fact about ${topic}.
+                   Start with "💡 Fact:".
+                   Max 20 words.`,
 
-            riddle: `Generate a SHORT riddle with answer (2-3 sentences total).
-                    Time: ${timeContext}
-                    Make it clever but not too hard. Format: "Riddle: [question] ... Answer: [answer]"`,
+            riddle: `${baseInstruction}
+                    Create a clever, short riddle about ${topic}.
+                    Format: "Riddle: [Question] (Answer: [One word])"`,
 
-            wisdom: `Generate a SHORT piece of life wisdom or insight (1-2 sentences max).
-                    Time: ${timeContext}
-                    Make it thought-provoking and practical. Like advice from a wise friend.
-                    Format: Start with "💭" then the wisdom.`
+            wisdom: `${baseInstruction}
+                    Share a nugget of strategic advice or wisdom regarding ${topic}.
+                    Start with "💭 Insight:".
+                    Max 20 words.`,
+
+            hack: `${baseInstruction}
+                   Share a "Life Hack" or "Pro Tip" related to ${topic} for gaining an edge.
+                   Start with "⚡ Hack:".
+                   Max 20 words.`,
+
+            luxury_insight: `${baseInstruction}
+                             Share a specific detail or appreciation about high-end ${topic}.
+                             Start with "💎 Luxury spec:".
+                             Max 20 words.`
         };
 
         try {
             const content = await geminiService.generateText(prompts[type]);
             return {
                 type,
-                content: content.trim()
+                content: content.trim(),
+                topic
             };
         } catch (error) {
             console.error('Failed to generate random content:', error);
             // Fallback content
             return {
                 type: 'quote',
-                content: '💫 "The best time to start was yesterday. The next best time is now."'
+                content: '💫 "The best investment you can make is in yourself."',
+                topic: 'Success'
             };
         }
     }
@@ -117,13 +164,16 @@ class RandomContentService {
             prediction: '🔮',
             fact: '🧠',
             riddle: '🤔',
-            wisdom: '🌟'
+            wisdom: '🌟',
+            hack: '⚡',
+            luxury_insight: '💎'
         };
 
         const emoji = typeEmojis[randomContent.type];
-        const typeLabel = randomContent.type.charAt(0).toUpperCase() + randomContent.type.slice(1);
+        const typeLabel = randomContent.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const topicLabel = randomContent.topic ? ` | ${randomContent.topic}` : '';
 
-        return `${emoji} *${typeLabel} of the Hour*\n\n${randomContent.content}`;
+        return `${emoji} *${typeLabel}${topicLabel}*\n\n${randomContent.content}`;
     }
 }
 
