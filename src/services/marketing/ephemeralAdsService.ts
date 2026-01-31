@@ -10,13 +10,16 @@ interface EphemeralAd {
     ttlMinutes: number; // Time to live in minutes
 }
 
-class EphemeralAdsService {
+export class EphemeralAdsService {
     private storagePath = path.join(process.cwd(), 'ephemeral_ads.json');
     private ads: EphemeralAd[] = [];
     private cleanupInterval: NodeJS.Timeout | null = null;
     private client: any = null; // WhatsApp client reference
 
-    constructor() {
+    constructor(customStoragePath?: string) {
+        if (customStoragePath) {
+            this.storagePath = customStoragePath;
+        }
         this.loadAds();
         // Run cleanup check every 5 minutes
         this.cleanupInterval = setInterval(() => this.runCleanup(), 5 * 60 * 1000);
@@ -52,7 +55,7 @@ class EphemeralAdsService {
      * @param messageKey The key object from the sent message
      * @param ttlMinutes How long to keep it (default 120 mins = 2 hours)
      */
-    public trackAd(jid: string, messageKey: any, ttlMinutes: number = 120) {
+    public trackAd(jid: string, messageKey: any, ttlMinutes: number = 30) {
         if (!messageKey) return;
 
         this.ads.push({

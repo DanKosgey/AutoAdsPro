@@ -421,7 +421,7 @@ export class MarketingService {
 
                         const sentMsg = await client.sendImage(groupJid, buffer, ad.text);
                         if (sentMsg?.key) {
-                            ephemeralAdsService.trackAd(groupJid, sentMsg.key, 120); // 2 hours TTL
+                            ephemeralAdsService.trackAd(groupJid, sentMsg.key, 30); // 30 mins TTL
                         }
                         console.log(`✅ Image ad sent to ${groupJid}`);
                     } catch (imgError: any) {
@@ -429,7 +429,7 @@ export class MarketingService {
                         // Only fallback if image send specifically failed
                         const sentFallback = await client.sendText(groupJid, `(Image unavailable)\n\n${ad.text}`);
                         if (sentFallback?.key) {
-                            ephemeralAdsService.trackAd(groupJid, sentFallback.key, 120);
+                            ephemeralAdsService.trackAd(groupJid, sentFallback.key, 30);
                         }
                         console.log(`✅ Fallback text ad sent to ${groupJid}`);
                     }
@@ -437,7 +437,7 @@ export class MarketingService {
                     console.log(`📝 Sending text ad to ${groupJid}...`);
                     const sentMsg = await client.sendText(groupJid, ad.text);
                     if (sentMsg?.key) {
-                        ephemeralAdsService.trackAd(groupJid, sentMsg.key, 120);
+                        ephemeralAdsService.trackAd(groupJid, sentMsg.key, 30);
                     }
                     console.log(`✅ Text ad sent to ${groupJid}`);
                 }
