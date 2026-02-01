@@ -791,8 +791,34 @@
                             <div class="form-group">
                                 <label>System Owner Phone</label>
                                 <div style="display: flex; gap: 8px; align-items: center;">
-                                    <input type="text" id="system-owner-phone" placeholder="+254700000000"
-                                        style="flex: 1;">
+                                    <select id="owner-country-code"
+                                        style="width: 140px; padding: 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); background: var(--card-bg); color: var(--text-primary);">
+                                        <option value="+254">🇰🇪 +254</option>
+                                        <option value="+1">🇺🇸 +1</option>
+                                        <option value="+44">🇬🇧 +44</option>
+                                        <option value="+91">🇮🇳 +91</option>
+                                        <option value="+234">🇳🇬 +234</option>
+                                        <option value="+27">🇿🇦 +27</option>
+                                        <option value="+256">🇺🇬 +256</option>
+                                        <option value="+255">🇹🇿 +255</option>
+                                        <option value="+250">🇷🇼 +250</option>
+                                        <option value="+86">🇨🇳 +86</option>
+                                        <option value="+81">🇯🇵 +81</option>
+                                        <option value="+82">🇰🇷 +82</option>
+                                        <option value="+33">🇫🇷 +33</option>
+                                        <option value="+49">🇩🇪 +49</option>
+                                        <option value="+39">🇮🇹 +39</option>
+                                        <option value="+34">🇪🇸 +34</option>
+                                        <option value="+61">🇦🇺 +61</option>
+                                        <option value="+55">🇧🇷 +55</option>
+                                        <option value="+52">🇲🇽 +52</option>
+                                        <option value="+971">🇦🇪 +971</option>
+                                        <option value="+966">🇸🇦 +966</option>
+                                        <option value="+20">🇪🇬 +20</option>
+                                    </select>
+                                    <input type="tel" id="system-owner-phone" placeholder="745026933"
+                                        style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); background: var(--card-bg);"
+                                        maxlength="15">
                                     <button id="save-owner-phone-btn" class="btn-primary"
                                         style="padding: 8px 16px; font-size: 0.9rem; white-space: nowrap;">Save</button>
                                 </div>

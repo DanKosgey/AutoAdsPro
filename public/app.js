@@ -893,7 +893,45 @@ async function loadUserProfile() {
         // Populate form fields
         document.getElementById('user-full-name').value = profile.fullName || '';
         if (document.getElementById('system-owner-phone')) {
-            document.getElementById('system-owner-phone').value = profile.configOwnerPhone || 'Not set in .env';
+            const ownerPhone = profile.configOwnerPhone || '';
+            const countryCodeSelect = document.getElementById('owner-country-code');
+            const phoneInput = document.getElementById('system-owner-phone');
+
+            if (ownerPhone && ownerPhone !== 'Not configured' && ownerPhone !== 'Not set in .env') {
+                // Try to match country code
+                const codes = ['+254', '+1', '+44', '+91', '+234', '+27', '+256', '+255', '+250', '+86', '+81', '+82', '+33', '+49', '+39', '+34', '+61', '+55', '+52', '+971', '+966', '+20'];
+                let matched = false;
+
+                for (const code of codes) {
+                    if (ownerPhone.startsWith(code)) {
+                        countryCodeSelect.value = code;
+                        phoneInput.value = ownerPhone.substring(code.length);
+                        matched = true;
+                        break;
+                    }
+                }
+
+                // If no match, try without +
+                if (!matched) {
+                    const cleanPhone = ownerPhone.replace(/^\+/, '');
+                    for (const code of codes) {
+                        const cleanCode = code.replace('+', '');
+                        if (cleanPhone.startsWith(cleanCode)) {
+                            countryCodeSelect.value = code;
+                            phoneInput.value = cleanPhone.substring(cleanCode.length);
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+
+                // If still no match, put entire number in input
+                if (!matched) {
+                    phoneInput.value = ownerPhone.replace(/^\+/, '');
+                }
+            } else {
+                phoneInput.value = '';
+            }
         }
         document.getElementById('user-preferred-name').value = profile.preferredName || '';
         document.getElementById('user-title').value = profile.title || '';
@@ -916,7 +954,18 @@ async function loadUserProfile() {
         document.getElementById('save-owner-phone-btn')?.addEventListener('click', async () => {
             const btn = document.getElementById('save-owner-phone-btn');
             const input = document.getElementById('system-owner-phone');
+            const countryCode = document.getElementById('owner-country-code');
             const originalText = btn.textContent;
+
+            // Validate phone number
+            const phoneNumber = input.value.trim();
+            if (!phoneNumber) {
+                showToast('Please enter a phone number', 'error');
+                return;
+            }
+
+            // Combine country code and phone number
+            const fullPhone = countryCode.value + phoneNumber;
 
             btn.textContent = '...';
             btn.disabled = true;
@@ -925,7 +974,7 @@ async function loadUserProfile() {
                 const response = await fetch(`${API_BASE}/api/settings/system`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'owner_phone', value: input.value })
+                    body: JSON.stringify({ key: 'owner_phone', value: fullPhone })
                 });
                 const data = await response.json();
                 if (data.success) {
@@ -933,11 +982,11 @@ async function loadUserProfile() {
                     showToast('Owner phone updated successfully!', 'success');
                     setTimeout(() => btn.textContent = originalText, 2000);
                 } else {
-                    alert('Failed to save owner phone');
+                    showToast('Failed to save owner phone', 'error');
                 }
             } catch (error) {
                 console.error('Failed to save owner phone:', error);
-                alert('Error saving owner phone');
+                showToast('Error saving owner phone', 'error');
             } finally {
                 btn.disabled = false;
             }
