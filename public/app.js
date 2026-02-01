@@ -568,34 +568,112 @@ function filterCommunities() {
 
 // Settings
 
-function loadSettings() {
+async function loadSettings() {
     const statusEl = document.getElementById('settings-status');
     const phoneEl = document.getElementById('settings-phone');
 
     statusEl.textContent = connectionStatus === 'CONNECTED' ? 'Connected' : 'Disconnected';
     phoneEl.textContent = connectionStatus === 'CONNECTED' ? 'Connected' : 'Not connected';
+
+    // Load System Settings
+    try {
+        const response = await fetch(`${API_BASE}/api/settings/system`);
+        const data = await response.json();
+        if (data.success && data.settings) {
+            const batchWindow = data.settings['batch_window_ms'] || 30000;
+            const input = document.getElementById('batch-window-input');
+            if (input) input.value = batchWindow;
+        }
+    } catch (error) {
+        console.error('Failed to load system settings:', error);
+    }
 }
 
 function initializeSettings() {
     // Desktop notifications toggle
     const desktopNotif = document.getElementById('desktop-notifications');
-    desktopNotif.checked = localStorage.getItem('desktop-notifications') === 'true';
-    desktopNotif.addEventListener('change', (e) => {
-        localStorage.setItem('desktop-notifications', e.target.checked);
-        if (e.target.checked) {
-            requestNotificationPermission();
-        }
-    });
+    if (desktopNotif) {
+        desktopNotif.checked = localStorage.getItem('desktop-notifications') === 'true';
+        desktopNotif.addEventListener('change', (e) => {
+            localStorage.setItem('desktop-notifications', e.target.checked);
+            if (e.target.checked) {
+                requestNotificationPermission();
+            }
+        });
+    }
 
     // Sound alerts toggle
     const soundAlerts = document.getElementById('sound-alerts');
-    soundAlerts.checked = localStorage.getItem('sound-alerts') === 'true';
-    soundAlerts.addEventListener('change', (e) => {
-        localStorage.setItem('sound-alerts', e.target.checked);
+    if (soundAlerts) {
+        soundAlerts.checked = localStorage.getItem('sound-alerts') === 'true';
+        soundAlerts.addEventListener('change', (e) => {
+            localStorage.setItem('sound-alerts', e.target.checked);
+        });
+    }
+
+    // Save Batch Window
+    document.getElementById('save-batch-window-btn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('save-batch-window-btn');
+        const input = document.getElementById('batch-window-input');
+        const originalText = btn.textContent;
+
+        btn.textContent = '...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE}/api/settings/system`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'batch_window_ms', value: input.value })
+            });
+            const data = await response.json();
+            if (data.success) {
+                btn.textContent = '✓';
+                setTimeout(() => btn.textContent = originalText, 2000);
+            } else {
+                alert('Failed to save setting');
+            }
+        } catch (error) {
+            console.error('Failed to save setting:', error);
+            alert('Error saving setting');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // Run Migrations
+    document.getElementById('run-migration-btn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('run-migration-btn');
+        if (!confirm('Are you sure you want to run database migrations? This may take a few seconds.')) return;
+
+        const originalText = btn.textContent;
+        btn.textContent = 'Running...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE}/api/admin/migrate`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                alert('Migrations completed successfully!');
+                btn.textContent = 'Completed ✓';
+            } else {
+                alert('Migration failed: ' + (data.error || 'Unknown error'));
+                btn.textContent = 'Failed ❌';
+            }
+        } catch (error) {
+            console.error('Migration error:', error);
+            alert('Migration error: ' + error.message);
+            btn.textContent = 'Error ❌';
+        } finally {
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }, 3000);
+        }
     });
 
     // Disconnect button
-    document.getElementById('disconnect-btn').addEventListener('click', async () => {
+    document.getElementById('disconnect-btn')?.addEventListener('click', async () => {
         if (confirm('Are you sure you want to disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) {
             const btn = document.getElementById('disconnect-btn');
             const originalText = btn.textContent;

@@ -585,6 +585,63 @@
                         </div>
                     </div>
 
+
+                    <!-- System Configuration Section -->
+                    <div class="settings-section">
+                        <div class="settings-section-header">
+                            <div class="settings-icon"
+                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>System Configuration</h3>
+                                <p>Advanced system settings</p>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                                    </svg>
+                                    <div>
+                                        <label>Batch Buffer Window (ms)</label>
+                                        <p>Wait time before processing messages</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="batch-window-input" placeholder="30000"
+                                    style="width: 100px; padding: 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); background: var(--card-bg);">
+                                <button id="save-batch-window-btn" class="btn-primary"
+                                    style="padding: 8px 16px; font-size: 0.9rem;">Save</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"
+                                        style="opacity: 0.6;">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" />
+                                    </svg>
+                                    <div>
+                                        <label>Database Migrations</label>
+                                        <p>Apply schema updates to database</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="run-migration-btn" class="btn-primary"
+                                style="background: #f59e0b; border: none;">Run Migrations</button>
+                        </div>
+                    </div>
+
                     <!-- Danger Zone Section -->
                     <div class="settings-section danger-section">
                         <div class="settings-section-header">

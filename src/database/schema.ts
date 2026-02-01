@@ -272,3 +272,12 @@ export const contentTemplates = pgTable('content_templates', {
     examples: text('examples'), // Few-shot examples
     createdAt: timestamp('created_at').defaultNow(),
 });
+
+// 16. System Settings: Dynamic Configuration
+export const systemSettings = pgTable('system_settings', {
+    key: varchar('key', { length: 100 }).primaryKey(),
+    value: text('value').notNull(), // JSON stringifiable value
+    description: text('description'),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+

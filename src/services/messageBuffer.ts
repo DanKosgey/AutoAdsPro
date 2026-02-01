@@ -6,6 +6,7 @@
 
 import { messageQueueService, Priority } from './queue/messageQueue';
 import { ownerService } from './ownerService';
+import { systemSettingsService } from './systemSettings';
 
 interface BufferedMessage {
     text: string;
@@ -17,8 +18,8 @@ export class MessageBuffer {
     private buffers: Map<string, BufferedMessage[]> = new Map();
     private timers: Map<string, NodeJS.Timeout> = new Map();
 
-    // Strict 60s window for standard users
-    private readonly BATCH_WINDOW_MS = 30000; // 30 seconds
+    // Default fallback
+    private readonly DEFAULT_BATCH_WINDOW_MS = 30000;
     private readonly OWNER_WINDOW_MS = 5000; // 5 seconds for owner
 
     constructor(private processBatchCallback: (jid: string, messages: string[]) => Promise<void>) { }
@@ -61,7 +62,7 @@ export class MessageBuffer {
      * Implements a sliding window: every new message resets the timer.
      * Processing only happens after silence for the window duration.
      */
-    add(jid: string, text: string) {
+    async add(jid: string, text: string) {
         // 1. Initialize buffer if missing
         if (!this.buffers.has(jid)) {
             this.buffers.set(jid, []);
@@ -84,7 +85,15 @@ export class MessageBuffer {
         }
 
         // 5. Determine window size
-        const windowSize = ownerService.isOwner(jid) ? this.OWNER_WINDOW_MS : this.BATCH_WINDOW_MS;
+        let batchWindow = this.DEFAULT_BATCH_WINDOW_MS;
+        try {
+            const setting = await systemSettingsService.getNumber('batch_window_ms');
+            if (setting) batchWindow = setting;
+        } catch (e) {
+            // ignore
+        }
+
+        const windowSize = ownerService.isOwner(jid) ? this.OWNER_WINDOW_MS : batchWindow;
 
         // 6. Start new timer
         const timer = setTimeout(() => {

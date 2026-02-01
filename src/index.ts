@@ -211,10 +211,42 @@ app.post('/api/disconnect', async (req, res) => {
     }
 });
 
-app.post('/api/settings', (req, res) => {
-    // Placeholder for future settings updates (e.g. system prompt, auto-reply toggle)
-    // Currently settings are handled via environment variables or client-side storage.
-    res.json({ success: true, message: 'Settings endpoint is currently a placeholder.' });
+import { systemSettingsService } from './services/systemSettings';
+
+app.get('/api/settings/system', async (req, res) => {
+    try {
+        const settings = await systemSettingsService.getAll();
+        res.json({ success: true, settings });
+    } catch (error) {
+        console.error('Failed to fetch system settings:', error);
+        res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+});
+
+app.post('/api/settings/system', async (req, res) => {
+    try {
+        const { key, value } = req.body;
+        if (!key || value === undefined) {
+            return res.status(400).json({ error: 'Key and value are required' });
+        }
+        await systemSettingsService.set(key, String(value));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to update system setting:', error);
+        res.status(500).json({ error: 'Failed to update setting' });
+    }
+});
+
+app.post('/api/admin/migrate', async (req, res) => {
+    try {
+        console.log('🚀 Manual migration triggered via API');
+        const { runMigrations } = await import('./database/migrate');
+        await runMigrations();
+        res.json({ success: true, message: 'Migrations executed successfully' });
+    } catch (error) {
+        console.error('Migration failed:', error);
+        res.status(500).json({ error: 'Migration failed: ' + (error as Error).message });
+    }
 });
 
 // AI Profile Endpoints
