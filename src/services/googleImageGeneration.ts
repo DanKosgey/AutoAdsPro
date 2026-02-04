@@ -3,175 +3,136 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
-export class GoogleImageGenerationService {
-    private static instance: GoogleImageGenerationService;
-    private recentVariations: Set<string> = new Set();
-    private readonly MAX_RECENT_TRACKING = 10;
+export class LeonardoImageGenerationService {
+    private static instance: LeonardoImageGenerationService;
+    private readonly apiKey: string;
+    private readonly baseUrl = 'https://cloud.leonardo.ai/api/rest/v1';
 
     private constructor() {
+        this.apiKey = process.env.LEONARDO_API || '';
         const tempDir = path.join(process.cwd(), 'temp');
         if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir);
         }
     }
 
-    public static getInstance(): GoogleImageGenerationService {
-        if (!GoogleImageGenerationService.instance) {
-            GoogleImageGenerationService.instance = new GoogleImageGenerationService();
+    public static getInstance(): LeonardoImageGenerationService {
+        if (!LeonardoImageGenerationService.instance) {
+            LeonardoImageGenerationService.instance = new LeonardoImageGenerationService();
         }
-        return GoogleImageGenerationService.instance;
+        return LeonardoImageGenerationService.instance;
     }
 
     /**
-     * Adds random variation modifiers to create diverse images
-     * Uses history tracking to avoid immediate repetition
+     * Generates an image using Leonardo AI
      */
-    private getRandomVariations(): string {
-        const styles = [
-            'photorealistic style',
-            'artistic interpretation',
-            'professional photography',
-            'digital art style',
-            'cinematic composition',
-            'natural lighting',
-            'dramatic lighting',
-            'soft lighting',
-            'studio lighting',
-            '4k architectural',
-            'macro photography'
-        ];
-
-        const perspectives = [
-            'eye-level view',
-            'slightly elevated angle',
-            'close-up perspective',
-            'wide shot',
-            'medium shot',
-            'dynamic angle',
-            'low angle',
-            'detailed macro zoom'
-        ];
-
-        const moods = [
-            'vibrant colors',
-            'natural colors',
-            'warm tones',
-            'cool tones',
-            'high contrast',
-            'soft contrast',
-            'atmospheric glow',
-            'clean and minimal'
-        ];
-
-        let variations: string;
-        let attempts = 0;
-
-        // Try to generate a unique combination not used recently
-        do {
-            const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-            const randomPerspective = perspectives[Math.floor(Math.random() * perspectives.length)];
-            const randomMood = moods[Math.floor(Math.random() * moods.length)];
-
-            variations = `${randomStyle}, ${randomPerspective}, ${randomMood}`;
-            attempts++;
-        } while (this.recentVariations.has(variations) && attempts < 20);
-
-        // Track this variation
-        this.recentVariations.add(variations);
-        if (this.recentVariations.size > this.MAX_RECENT_TRACKING) {
-            // Remove the oldest inserted item (Set iteration order is insertion order)
-            const first = this.recentVariations.values().next().value;
-            if (first) this.recentVariations.delete(first);
+    public async generateImage(prompt: string, retryCount = 1): Promise<string> {
+        if (!this.apiKey) {
+            throw new Error('LEONARDO_API key is missing in environment variables');
         }
 
-        return variations;
-    }
+        console.log(`🎨 Creating Leonardo AI generation for: "${prompt.substring(0, 100)}..."`);
 
-    /**
-     * Enhances the user's prompt to be more specific and detailed
-     */
-    private enhancePrompt(userPrompt: string): string {
-        const cleanPrompt = userPrompt.trim();
-
-        // Add random variations to ensure different outputs
-        const variations = this.getRandomVariations();
-
-        const qualityModifiers = 'high quality, detailed, accurate representation, 8k resolution';
-
-        // Combine: user prompt + quality + random variations
-        return `${cleanPrompt}, ${qualityModifiers}, ${variations}`;
-    }
-
-    /**
-     * Generates a random seed for image generation
-     */
-    private getRandomSeed(): number {
-        return Math.floor(Math.random() * 1000000000);
-    }
-
-    public async generateImage(prompt: string): Promise<string> {
         try {
-            console.log(`🎨 Original prompt: ${prompt}`);
-
-            // Enhance the prompt for better accuracy and variety
-            const enhancedPrompt = this.enhancePrompt(prompt);
-            console.log(`✨ Enhanced prompt: ${enhancedPrompt}`);
-
-            // Generate random seed for uniqueness
-            const seed = this.getRandomSeed();
-            console.log(`🎲 Using seed: ${seed}`);
-
-            // Pollinations.ai API with 'flux' model, enhancement, and seed
-            const encodedPrompt = encodeURIComponent(enhancedPrompt);
-            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&model=flux&enhance=true&seed=${seed}`;
-
-            // Download the image
-            const response = await axios.get(imageUrl, {
-                responseType: 'arraybuffer',
-                timeout: 90000, // Increased timeout for flux model
-                headers: {
-                    'Cache-Control': 'no-cache',
+            // 1. Initiate Generation
+            const initResponse = await axios.post(
+                `${this.baseUrl}/generations`,
+                {
+                    modelId: "b2614463-296c-462a-9586-aafdb8f00e36", // FLUX Dev
+                    prompt: prompt,
+                    width: 1024,
+                    height: 1024,
+                    num_images: 1,
+                    contrast: 3.5,
+                    styleUUID: "111dc692-d470-4eec-b791-3475abac4c46", // Dynamic
+                    enhancePrompt: false
+                },
+                {
+                    headers: {
+                        'accept': 'application/json',
+                        'authorization': `Bearer ${this.apiKey}`,
+                        'content-type': 'application/json'
+                    }
                 }
+            );
+
+            const generationId = initResponse.data.sdGenerationJob?.generationId;
+            if (!generationId) {
+                throw new Error('Failed to get generationId from Leonardo AI');
+            }
+
+            console.log(`⏳ Generation ID: ${generationId}. Polling for results...`);
+
+            // 2. Poll for Status
+            let imageUrl: string | null = null;
+            let attempts = 0;
+            const maxAttempts = 30; // 30 * 2s = 60s max wait
+
+            while (!imageUrl && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                attempts++;
+
+                const statusResponse = await axios.get(
+                    `${this.baseUrl}/generations/${generationId}`,
+                    {
+                        headers: {
+                            'accept': 'application/json',
+                            'authorization': `Bearer ${this.apiKey}`
+                        }
+                    }
+                );
+
+                const generation = statusResponse.data.generations_by_pk;
+                if (generation?.status === 'COMPLETE' && generation.generated_images?.length > 0) {
+                    imageUrl = generation.generated_images[0].url;
+                } else if (generation?.status === 'FAILED') {
+                    throw new Error('Leonardo AI generation failed');
+                }
+
+                if (attempts % 5 === 0) {
+                    console.log(`...still waiting (${attempts * 2}s)`);
+                }
+            }
+
+            if (!imageUrl) {
+                throw new Error('Timeout waiting for Leonardo AI image generation');
+            }
+
+            // 3. Download the image
+            console.log(`📥 Image ready! Downloading...`);
+            const imageResponse = await axios.get(imageUrl, {
+                responseType: 'arraybuffer',
+                timeout: 30000
             });
 
-            const buffer = Buffer.from(response.data);
             const fileName = `img_${uuidv4()}.jpg`;
             const filePath = path.join(process.cwd(), 'temp', fileName);
+            fs.writeFileSync(filePath, Buffer.from(imageResponse.data));
 
-            fs.writeFileSync(filePath, buffer);
             console.log(`✅ Image saved to ${filePath}`);
-
             return filePath;
 
         } catch (error: any) {
-            console.error('❌ Image Generation Error:', error.message);
-            throw new Error('QUOTA_EXCEEDED');
+            console.error('❌ Leonardo AI Generation Failed:', error.response?.data || error.message);
+            throw new Error(`LEONARDO_AI_FAILED: ${error.message}`);
         }
     }
 
     /**
-     * Generate multiple variations of the same prompt
+     * Generate multiple variations (sequential for Leonardo)
      */
     public async generateImageVariations(prompt: string, count: number = 3): Promise<string[]> {
         const images: string[] = [];
-
         for (let i = 0; i < count; i++) {
             try {
-                console.log(`\n🎨 Generating variation ${i + 1}/${count}...`);
-                const imagePath = await this.generateImage(prompt);
-                images.push(imagePath);
-
-                // Small delay between requests
-                if (i < count - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                }
-            } catch (error) {
-                console.error(`Failed to generate variation ${i + 1}`);
+                const path = await this.generateImage(prompt);
+                images.push(path);
+            } catch (err) {
+                console.error(`Error generating variation ${i + 1}:`, err);
             }
         }
-
         return images;
     }
 }
 
-export const googleImageGenerationService = GoogleImageGenerationService.getInstance();
+export const googleImageGenerationService = LeonardoImageGenerationService.getInstance();

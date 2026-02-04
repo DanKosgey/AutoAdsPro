@@ -66,11 +66,13 @@ function initializeNavigation() {
     // Desktop Sidebar
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = item.dataset.page;
-            switchPage(page);
-        });
+        if (item.dataset.page) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.dataset.page;
+                switchPage(page);
+            });
+        }
     });
 
     // Mobile Bottom Nav
@@ -107,6 +109,14 @@ function switchPage(page) {
     });
     document.getElementById(`${page}-page`).classList.add('active');
 
+    // Toggle sidebar for Analytics page (full-width layout)
+    const sidebar = document.querySelector('.sidebar');
+    if (page === 'analytics') {
+        sidebar.classList.add('hidden');
+    } else {
+        sidebar.classList.remove('hidden');
+    }
+
     currentPage = page;
 
     // Load page data
@@ -138,6 +148,12 @@ function loadPageData(page) {
             break;
         case 'settings':
             loadSettings();
+            break;
+        case 'shops':
+            loadShops();
+            break;
+        case 'analytics':
+            loadAnalytics();
             break;
     }
 }
@@ -2065,3 +2081,648 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ==========================================
+// SHOPFLOW LOGIC
+// ==========================================
+
+let currentShopId = null;
+let currentImageData = null;
+
+// Expose functions to window
+
+window.openCreateShopModal = function () {
+    const modal = document.getElementById('createShopModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('createShopForm').reset();
+        // Reset radio description
+        document.getElementById('shop-type-desc').textContent = 'Standard retail shop for selling products with prices and stock.';
+    }
+};
+
+window.closeCreateShopModal = function () {
+    const modal = document.getElementById('createShopModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Ensure this is globally available for the radio button onchange
+window.toggleShopTypeDescription = function () {
+    const type = document.querySelector('input[name="shopType"]:checked').value;
+    const desc = document.getElementById('shop-type-desc');
+    desc.textContent = 'Standard retail shop for selling products with prices and stock.';
+}
+
+
+window.handleCreateShop = async function (e) {
+    e.preventDefault();
+
+    const shopData = {
+        name: document.getElementById('shopName').value,
+        description: document.getElementById('shopDescription').value,
+        emoji: document.getElementById('shopEmoji').value || '🏪',
+        type: document.querySelector('input[name="shopType"]:checked').value
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/api/shops`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(shopData)
+        });
+        const result = await response.json();
+
+        if (result && result.success) {
+            closeCreateShopModal();
+            loadShops();
+            showToast('Shop created successfully!', 'success');
+        } else {
+            showToast('Failed to create shop', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating shop:', error);
+        showToast('Error creating shop', 'error');
+    }
+};
+
+window.loadShops = async function () {
+    const grid = document.getElementById('shopsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '<div style="text-align: center; width: 100%; padding: 40px; color: var(--text-secondary);">Loading...</div>';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/shops`);
+        const shops = await response.json();
+
+        if (!shops || shops.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏪</div>
+                    <div class="empty-state-text">No collections yet</div>
+                    <p>Create a shop or career portfolio to get started!</p>
+                </div>
+            `;
+        } else {
+            grid.innerHTML = shops.map((shop, index) => {
+                const productCount = shop.products ? shop.products.length : 0;
+
+                // Calculate value only for retail shops
+                const isCareer = shop.type === 'career';
+                const totalValue = !isCareer && shop.products ? shop.products.reduce((sum, p) => sum + (p.price * p.stock), 0) : 0;
+
+                const itemLabel = isCareer ? 'Items' : 'Products';
+                const valueHtml = isCareer ? '' : `
+                            <div class="stat">
+                                <div class="stat-value">$${totalValue.toLocaleString()}</div>
+                                <div class="stat-label">Value</div>
+                            </div>`;
+
+                const typeBadge = isCareer ? '<span style="font-size:0.7em; background:var(--primary-color); padding:2px 6px; border-radius:4px; color:white; margin-left:8px; vertical-align:middle">Portfolio</span>' : '';
+
+                return `
+                    <div class="shop-card" onclick="openShop(${shop.id})" style="animation-delay: ${index * 0.1}s">
+                        <button class="delete-shop-btn" onclick="event.stopPropagation(); deleteShop(${shop.id})">×</button>
+                        <div class="shop-icon">${shop.emoji}</div>
+                        <div class="shop-name">${shop.name} ${typeBadge}</div>
+                        <div class="shop-description">${shop.description || ''}</div>
+                        <div class="shop-stats">
+                            <div class="stat">
+                                <div class="stat-value">${productCount}</div>
+                                <div class="stat-label">${itemLabel}</div>
+                            </div>
+                            ${valueHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Error loading shops:', error);
+        grid.innerHTML = '<div style="text-align: center; width: 100%; padding: 40px; color: var(--danger);">Failed to load shops</div>';
+    }
+};
+
+window.deleteShop = async function (id) {
+    if (confirm('Delete this collection and all its items?')) {
+        try {
+            const response = await fetch(`${API_BASE}/api/shops/${id}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (result && result.success) {
+                loadShops();
+                showToast('Deleted successfully', 'success');
+            } else {
+                showToast('Failed to delete', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting shop:', error);
+            showToast('Error deleting', 'error');
+        }
+    }
+};
+
+window.openShop = async function (shopId) {
+    currentShopId = shopId;
+
+    document.getElementById('shops-view').style.display = 'none';
+    document.getElementById('products-view').style.display = 'grid'; // Changed to grid to match CSS if needed, or match previous
+
+    // Fetch latest details to check type
+    try {
+        const response = await fetch(`${API_BASE}/api/shops/${shopId}`);
+        const shop = await response.json();
+
+        if (!shop) return;
+
+        document.getElementById('currentShopName').textContent = shop.name;
+        document.getElementById('currentShopDesc').textContent = shop.description;
+        document.getElementById('currentShopIcon').textContent = shop.emoji;
+
+        // Adjust UI based on type
+        const isCareer = shop.type === 'career';
+        const productAddBtn = document.querySelector('#products-view .btn-primary');
+        if (productAddBtn) productAddBtn.textContent = isCareer ? '+ Add Skill/Project' : '+ Add Product';
+
+        // Adjust Add Product Modal inputs
+        const priceGroup = document.getElementById('productPriceGroup');
+        const stockGroup = document.getElementById('productStockGroup');
+        const nameLabel = document.querySelector('label[for="productName"]');
+        const descLabel = document.querySelector('label[for="productDescription"]');
+
+        // Store type on the modal for later use (or assume currentShopId lookup)
+        window.currentShopType = shop.type;
+
+        if (isCareer) {
+            if (priceGroup) priceGroup.style.display = 'none';
+            if (stockGroup) stockGroup.style.display = 'none';
+            if (nameLabel) nameLabel.textContent = 'Skill / Project Name';
+            if (descLabel) descLabel.textContent = 'Description / Details';
+        } else {
+            if (priceGroup) priceGroup.style.display = 'block';
+            if (stockGroup) stockGroup.style.display = 'block';
+            if (nameLabel) nameLabel.textContent = 'Product Name';
+            if (descLabel) descLabel.textContent = 'Description';
+        }
+
+        renderProducts(shop.products, shop.type);
+    } catch (error) {
+        console.error('Error opening shop:', error);
+        showToast('Error loading details', 'error');
+        showShopsView();
+    }
+};
+
+window.renderProducts = function (products, shopType = 'shop') {
+    const grid = document.getElementById('productsGrid');
+    const isCareer = shopType === 'career';
+
+    if (!products || products.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">${isCareer ? '💼' : '📦'}</div>
+                <div class="empty-state-text">No items yet</div>
+                <p>${isCareer ? 'Add your first skill or project!' : 'Add your first product to this shop!'}</p>
+            </div>
+        `;
+    } else {
+        grid.innerHTML = products.map((product, index) => {
+            let footerHtml = '';
+
+            if (!isCareer) {
+                let stockClass = '';
+                let stockText = `${product.stock} in stock`;
+
+                if (product.stock === 0) {
+                    stockClass = 'out';
+                    stockText = 'Out of stock';
+                } else if (product.stock < 10) {
+                    stockClass = 'low';
+                    stockText = `${product.stock} left`;
+                }
+
+                footerHtml = `
+                    <div class="product-footer">
+                        <div class="product-price">$${Number(product.price).toFixed(2)}</div>
+                        <div class="product-stock ${stockClass}">${stockText}</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="product-card" style="animation: fadeIn 0.6s ease ${index * 0.1}s both">
+                    <img src="${product.imageUrl || product.image || 'https://placehold.co/400x300?text=No+Image'}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-description">${product.description}</div>
+                        ${footerHtml}
+                        <button class="delete-product-btn" onclick="deleteProduct(${product.id})">Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+};
+
+window.handleImageSelect = function (e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentImageData = e.target.result;
+            const previewImage = document.getElementById('imagePreview');
+            const imageUploadArea = document.getElementById('imageUploadArea');
+            const removeImageBtn = document.getElementById('removeImageBtn');
+            const placeholder = document.getElementById('uploadPlaceholder');
+
+            previewImage.src = currentImageData;
+            previewImage.classList.add('visible');
+            imageUploadArea.classList.add('has-image');
+
+            if (placeholder) placeholder.style.display = 'none';
+
+            removeImageBtn.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+window.removeImage = function () {
+    currentImageData = null;
+    const previewImage = document.getElementById('imagePreview');
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    const imageInput = document.getElementById('imageInput');
+    const placeholder = document.getElementById('uploadPlaceholder');
+
+    previewImage.src = '';
+    previewImage.classList.remove('visible');
+    imageUploadArea.classList.remove('has-image');
+
+    if (placeholder) placeholder.style.display = 'block';
+
+    imageInput.value = '';
+    removeImageBtn.style.display = 'none';
+};
+
+window.handleAddProduct = async function (e) {
+    e.preventDefault();
+
+    if (!currentShopId) return;
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Adding...';
+    btn.disabled = true;
+
+    const productData = {
+        name: document.getElementById('productName').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        stock: parseInt(document.getElementById('productStock').value),
+        description: document.getElementById('productDesc').value,
+        image: currentImageData || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="20" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/api/shops/${currentShopId}/products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productData)
+        });
+        const result = await response.json();
+
+        if (result && result.success) {
+            // Reset form
+            document.getElementById('addProductForm').reset();
+            removeImage(); // helper to reset image UI
+
+            showToast('Product added successfully!', 'success');
+
+            // Reload shop details
+            openShop(currentShopId);
+        } else {
+            showToast('Failed to add product', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding product:', error);
+        showToast('Error adding product', 'error');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+};
+
+window.deleteProduct = async function (productId) {
+    if (confirm('Delete this product?')) {
+        try {
+            const response = await fetch(`${API_BASE}/api/products/${productId}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (result && result.success) {
+                showToast('Product deleted', 'success');
+                openShop(currentShopId);
+            } else {
+                showToast('Failed to delete product', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            showToast('Error deleting product', 'error');
+        }
+    }
+};
+
+// ==========================================
+// Analytics Dashboard Logic
+// ==========================================
+
+let engagementChart = null;
+let campaignChart = null;
+
+async function loadAnalytics() {
+    console.log('🔄 Loading Analytics Data... (Debug Mode)');
+    try {
+        // 1. Fetch Group Analytics
+        console.log('📡 Fetching /api/analytics/groups...');
+        const groupRes = await fetch(`${API_BASE}/api/analytics/groups`);
+        if (!groupRes.ok) {
+            const errText = await groupRes.text();
+            console.error('❌ Group Analytics Failed:', groupRes.status, errText);
+            throw new Error(`Failed to fetch group stats: ${groupRes.status}`);
+        }
+        const groupStats = await groupRes.json();
+        console.log('✅ Group Stats Received:', groupStats);
+
+        // 2. Fetch Engagement Analytics
+        console.log('📡 Fetching /api/analytics/engagement...');
+        const engageRes = await fetch(`${API_BASE}/api/analytics/engagement`);
+        if (!engageRes.ok) {
+            const errText = await engageRes.text();
+            console.error('❌ Engagement Analytics Failed:', engageRes.status, errText);
+            throw new Error(`Failed to fetch engagement stats: ${engageRes.status}`);
+        }
+        const engagementStats = await engageRes.json();
+        console.log('✅ Engagement Stats Received:', engagementStats);
+
+        // 3. Update UI
+        console.log('🎨 Updating Analytics UI...');
+        // Update KPI Cards
+        document.getElementById('stat-active-chats').textContent = engagementStats.overview.activeChats || '0';
+        document.getElementById('stat-avg-length').textContent = (engagementStats.overview.avgChatLength || '0');
+        document.getElementById('stat-read-rate').textContent = (engagementStats.overview.readRate || '0') + '%';
+        document.getElementById('stat-avg-admins').textContent = groupStats.avgAdmins.toFixed(1);
+
+        // Update Tables & Charts
+        renderTopGroupsTable(groupStats.largestGroups);
+        renderEngagementChart(engagementStats.overview);
+        renderCampaignChart(engagementStats.topCampaigns);
+
+    } catch (error) {
+        console.error('Failed to load analytics:', error);
+        showToast('Failed to load analytics data', 'error');
+    }
+}
+
+
+// ==========================================
+// Group Analytics Drill-down Logic
+// ==========================================
+
+let gaEngagementChart = null;
+let gaRoleChart = null;
+
+window.openGroupAnalytics = async function (jid) {
+    try {
+        const modal = document.getElementById('groupAnalyticsModal');
+        modal.style.display = 'flex';
+
+        // Reset/Loading state
+        document.getElementById('ga-subject').textContent = 'Loading...';
+
+        const res = await fetch(`${API_BASE}/api/analytics/groups/details/${jid}`);
+        if (!res.ok) throw new Error('Failed to fetch details');
+        const data = await res.json();
+
+        const { info, members, stats } = data;
+
+        // 1. Populate Header & KPIs
+        document.getElementById('ga-subject').textContent = info.subject;
+        document.getElementById('ga-jid').textContent = info.jid;
+        document.getElementById('ga-avatar').textContent = info.subject.substring(0, 2).toUpperCase();
+
+        document.getElementById('ga-members').textContent = info.totalMembers;
+        document.getElementById('ga-admins').textContent = info.adminsCount;
+        document.getElementById('ga-read-rate').textContent = stats.readRate + '%';
+        document.getElementById('ga-replies').textContent = stats.replies;
+
+        // Calculate Bot Age
+        const joinDate = info.botJoinedAt ? new Date(info.botJoinedAt) : new Date();
+        const diffTime = Math.abs(new Date() - joinDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        document.getElementById('ga-bot-age').textContent = diffDays + (diffDays === 1 ? ' Day' : ' Days');
+
+        // 2. Render Charts
+        renderGaCharts(stats, members);
+
+        // 3. Render Member Table
+        const tbody = document.getElementById('ga-members-body');
+        tbody.innerHTML = members.map(m => `
+            <tr>
+                <td>${formatPhone(m.phone)}</td>
+                <td>
+                    <span class="badge ${m.isAdmin ? 'badge-primary' : 'badge-secondary'}">
+                        ${m.role}
+                    </span>
+                </td>
+                <td><span class="text-muted">Active</span></td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error opening group analytics:', error);
+        showToast('Failed to load group details', 'error');
+        closeGroupAnalyticsModal();
+    }
+};
+
+window.closeGroupAnalyticsModal = function () {
+    document.getElementById('groupAnalyticsModal').style.display = 'none';
+};
+
+function renderGaCharts(stats, members) {
+    // Engagement Chart
+    const ctx1 = document.getElementById('gaEngagementChart')?.getContext('2d');
+    if (ctx1) {
+        if (gaEngagementChart) gaEngagementChart.destroy();
+        gaEngagementChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['Delivered', 'Read', 'Replied'],
+                datasets: [{
+                    label: 'Count',
+                    data: [stats.delivered, stats.read, stats.replies],
+                    backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Role Distribution Chart
+    const ctx2 = document.getElementById('gaRoleChart')?.getContext('2d');
+    if (ctx2) {
+        if (gaRoleChart) gaRoleChart.destroy();
+
+        const admins = members.filter(m => m.isAdmin).length;
+        const regular = members.length - admins;
+
+        gaRoleChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Admins', 'Participants'],
+                datasets: [{
+                    data: [admins, regular],
+                    backgroundColor: ['#f59e0b', '#3b82f6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#9ca3af' } }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+}
+
+function formatPhone(phone) {
+    if (!phone) return 'Unknown';
+    return phone.split('@')[0];
+}
+
+// Update Render Table to include button
+function renderTopGroupsTable(groups) {
+    const tbody = document.getElementById('top-groups-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = groups.map(g => `
+        <tr>
+            <td class="group-name">
+                <div class="avatar-sm">${g.subject.substring(0, 2).toUpperCase()}</div>
+                <div>
+                    <div class="fw-bold">${g.subject}</div>
+                    <small class="text-muted">${g.jid.split('@')[0]}</small>
+                </div>
+            </td>
+            <td>${g.totalMembers}</td>
+            <td>${g.adminsCount}</td>
+            <td style="text-align: right;">
+                <button class="btn-icon" onclick="openGroupAnalytics('${g.jid}')" title="Analyze Group">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderEngagementChart(overview) {
+    const ctx = document.getElementById('engagementChart')?.getContext('2d');
+    if (!ctx) return;
+
+    if (engagementChart) {
+        engagementChart.destroy();
+    }
+
+    engagementChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Delivered', 'Read', 'Replied'],
+            datasets: [{
+                label: 'Messages',
+                data: [overview.delivered, overview.read, overview.replies],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.6)', // Blue
+                    'rgba(16, 185, 129, 0.6)', // Green
+                    'rgba(139, 92, 246, 0.6)'  // Purple
+                ],
+                borderColor: [
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(16, 185, 129, 1)',
+                    'rgba(139, 92, 246, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+            }
+        }
+    });
+}
+
+function renderCampaignChart(campaigns) {
+    const ctx = document.getElementById('campaignChart')?.getContext('2d');
+    if (!ctx) return;
+
+    if (campaignChart) {
+        campaignChart.destroy();
+    }
+
+    const labels = campaigns.map(c => c.name);
+    const readData = campaigns.map(c => c.reads);
+    const replyData = campaigns.map(c => c.replies);
+
+    campaignChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Reads',
+                    data: readData,
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Replies',
+                    data: replyData,
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#9ca3af' } }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
+            }
+        }
+    });
+}

@@ -712,6 +712,146 @@ app.put('/api/marketing/campaign/targets', async (req, res) => {
     }
 });
 
+
+// ShopFlow Endpoints
+app.get('/api/shops', async (req, res) => {
+    try {
+        const { shopService } = await import('./services/shopService');
+        const shops = await shopService.getAllShops();
+        res.json(shops);
+    } catch (error) {
+        console.error('Failed to fetch shops:', error);
+        res.status(500).json({ error: 'Failed to fetch shops' });
+    }
+});
+
+app.post('/api/shops', async (req, res) => {
+    try {
+        const { shopService } = await import('./services/shopService');
+        const { name, description, emoji, type } = req.body;
+        if (!name) return res.status(400).json({ error: 'Shop name is required' });
+
+        const newShop = await shopService.createShop(name, description, emoji, type);
+        res.json({ success: true, shop: newShop });
+    } catch (error) {
+        console.error('Failed to create shop:', error);
+        res.status(500).json({ error: 'Failed to create shop' });
+    }
+});
+
+app.get('/api/shops/:id', async (req, res) => {
+    try {
+        const { shopService } = await import('./services/shopService');
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) return res.status(400).json({ error: 'Invalid shop ID' });
+
+        const shop = await shopService.getShopById(id);
+        if (!shop) return res.status(404).json({ error: 'Shop not found' });
+
+        res.json(shop);
+    } catch (error) {
+        console.error('Failed to fetch shop:', error);
+        res.status(500).json({ error: 'Failed to fetch shop' });
+    }
+});
+
+app.delete('/api/shops/:id', async (req, res) => {
+    try {
+        const { shopService } = await import('./services/shopService');
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) return res.status(400).json({ error: 'Invalid shop ID' });
+
+        await shopService.deleteShop(id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to delete shop:', error);
+        res.status(500).json({ error: 'Failed to delete shop' });
+    }
+});
+
+app.post('/api/shops/:id/products', async (req, res) => {
+    try {
+        const { shopService } = await import('./services/shopService');
+        const shopId = parseInt(req.params.id);
+        if (isNaN(shopId)) return res.status(400).json({ error: 'Invalid shop ID' });
+
+        const { name, price, stock, description, image } = req.body;
+        const productData = {
+            name,
+            description,
+            price: parseFloat(price),
+            stock: parseInt(stock),
+            imageUrl: image
+        };
+
+        const product = await shopService.addProduct(shopId, productData);
+        res.json({ success: true, product });
+    } catch (error) {
+        console.error('Failed to add product:', error);
+        res.status(500).json({ error: 'Failed to add product' });
+    }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const { shopService } = await import('./services/shopService');
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) return res.status(400).json({ error: 'Invalid product ID' });
+
+        await shopService.deleteProduct(id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Failed to delete product:', error);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
+// Analytics API Endpoints
+app.get('/api/analytics/groups/details/:jid', async (req, res) => {
+    try {
+        const { groupService } = await import('./services/groupService');
+        const jid = req.params.jid;
+        const details = await groupService.getGroupDetails(jid);
+
+        if (!details) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        res.json(details);
+    } catch (error) {
+        console.error('Failed to fetch group details:', error);
+        res.status(500).json({ error: 'Failed to fetch group details' });
+    }
+});
+
+app.get('/api/analytics/groups', async (req, res) => {
+    console.log('📊 API Request: GET /api/analytics/groups');
+    try {
+        const { groupService } = await import('./services/groupService');
+        const stats = await groupService.getGroupStats();
+        console.log('✅ Group Stats calculated:', JSON.stringify(stats, null, 2));
+
+        // Also fetch list of top groups
+        // We'll just return the stats object which includes largestGroups
+        res.json(stats);
+    } catch (error) {
+        console.error('❌ Failed to fetch group analytics:', error);
+        console.error('Failed to fetch group analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch group analytics' });
+    }
+});
+
+app.get('/api/analytics/engagement', async (req, res) => {
+    try {
+        const { analyticsService } = await import('./services/analyticsService');
+        const stats = await analyticsService.getDashboardStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('Failed to fetch engagement analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch engagement analytics' });
+    }
+});
+
 // SPA fallback: Serve index.html for all non-API routes
 // This must be AFTER all API routes
 app.use((req, res, next) => {
@@ -722,6 +862,46 @@ app.use((req, res, next) => {
         next();
     }
 });
+
+
+
+
+
+// Analytics API Endpoints
+app.get('/api/analytics/groups', async (req, res) => {
+    try {
+        const { groupService } = await import('./services/groupService');
+        const stats = await groupService.getGroupStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('Failed to fetch group analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch group analytics' });
+    }
+});
+
+app.get('/api/analytics/engagement', async (req, res) => {
+    try {
+        const { analyticsService } = await import('./services/analyticsService');
+        const stats = await analyticsService.getDashboardStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('Failed to fetch engagement analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch engagement analytics' });
+    }
+});
+
+
+// SPA fallback: Serve index.html for all non-API routes
+// This must be AFTER all API routes
+app.use((req, res, next) => {
+    // Only handle GET requests that aren't for API endpoints
+    if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/health') && !req.path.startsWith('/ready')) {
+        res.sendFile(path.join(__dirname, '../public/index.html'));
+    } else {
+        next();
+    }
+});
+
 
 const start = async () => {
     try {

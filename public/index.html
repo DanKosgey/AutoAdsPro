@@ -12,6 +12,12 @@
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600;700;900&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="/styles_shop.css">
+    <link rel="stylesheet" href="/styles_analytics.css">
+    <!-- intl-tel-input plugin -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/css/intlTelInput.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -89,6 +95,13 @@
                     </svg>
                     <span>Marketing</span>
                 </a>
+                <a href="#" class="nav-item" data-page="shops">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+                    </svg>
+                    <span>Shops</span>
+                </a>
                 <a href="#" class="nav-item" data-page="communities">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -97,6 +110,14 @@
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                     <span>Communities</span>
+                </a>
+                <a href="#" class="nav-item" data-page="analytics">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span>Analytics</span>
                 </a>
                 <a href="#" class="nav-item" data-page="ai-profile">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -682,6 +703,153 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Shops Page -->
+            <div class="page" id="shops-page">
+                <header class="page-header shop-page-header">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                            </svg>
+                        </button>
+                        <h2>ShopFlow Manager</h2>
+                    </div>
+                </header>
+
+                <!-- Views Container -->
+                <div id="shopflow-container">
+                    <!-- Shops List View -->
+                    <div id="shops-view" class="view-section active">
+                        <div class="shops-header">
+                            <div>
+                                <h2 style="font-size: 1.75rem; color: var(--text-primary); margin-bottom: 0.5rem;">Your
+                                    Shops</h2>
+                                <p style="color: var(--text-secondary);">Manage your product catalog</p>
+                            </div>
+                            <button class="btn-primary" onclick="openCreateShopModal()" style="width: auto;">
+                                + Create New Shop
+                            </button>
+                        </div>
+
+                        <div id="shopsGrid" class="shops-grid">
+                            <!-- Populated by JS -->
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🏪</div>
+                                <h3 class="empty-state-text">No shops yet</h3>
+                                <p>Create your first shop to start adding products.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Shop Products View -->
+                    <div id="products-view" class="view-section" style="display: none;">
+                        <button class="btn-secondary back-btn" onclick="showShopsView()"
+                            style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; width: auto;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                            </svg>
+                            Back to Shops
+                        </button>
+
+                        <div class="current-shop-banner">
+                            <div class="current-shop-icon" id="currentShopIcon">🏪</div>
+                            <div class="current-shop-info">
+                                <h3 id="currentShopName">Shop Name</h3>
+                                <p id="currentShopDesc">Shop Description</p>
+                            </div>
+                        </div>
+
+                        <div class="products-view">
+                            <!-- Add Product Form -->
+                            <div class="add-product-section">
+                                <h3>Add New Product</h3>
+                                <form id="addProductForm" onsubmit="handleAddProduct(event)">
+                                    <div class="form-group">
+                                        <label>Product Name</label>
+                                        <input type="text" id="productName" required
+                                            placeholder="e.g. Wireless Headphones">
+                                    </div>
+
+                                    <div class="form-group"
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label>Price</label>
+                                            <input type="number" id="productPrice" required placeholder="0.00">
+                                        </div>
+                                        <div>
+                                            <label>Stock</label>
+                                            <input type="number" id="productStock" required placeholder="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Description</label>
+                                        <textarea id="productDesc" rows="3"
+                                            placeholder="Describe your product..."></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Product Image</label>
+                                        <div class="image-upload" id="imageUploadArea"
+                                            onclick="document.getElementById('imageInput').click()">
+                                            <input type="file" id="imageInput" accept="image/*"
+                                                onchange="handleImageSelect(event)">
+                                            <div id="uploadPlaceholder">
+                                                <div class="upload-icon">📷</div>
+                                                <div class="upload-text">Click to upload image</div>
+                                            </div>
+                                            <img id="imagePreview" class="preview-image">
+                                        </div>
+                                        <button type="button" id="removeImageBtn" class="delete-product-btn"
+                                            style="display: none; margin-top: 10px;" onclick="removeImage()">Remove
+                                            Image</button>
+                                    </div>
+
+                                    <button type="submit" class="btn-primary">Add Product</button>
+                                </form>
+                            </div>
+
+                            <!-- Products List -->
+                            <div class="products-section">
+                                <div id="productsGrid" class="products-grid">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Shop Modal -->
+                <div id="createShopModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Create New Shop</h3>
+                        </div>
+                        <form id="createShopForm" onsubmit="handleCreateShop(event)">
+                            <div class="form-group">
+                                <label>Shop Name</label>
+                                <input type="text" id="shopName" required placeholder="e.g. Tech Store">
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="shopDescription"
+                                    placeholder="What kind of products do you sell?"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Shop Emoji Icon</label>
+                                <input type="text" id="shopEmoji" placeholder="e.g. 🏪" maxlength="2">
+                            </div>
+                            <div class="modal-buttons">
+                                <button type="button" class="btn-secondary"
+                                    onclick="closeCreateShopModal()">Cancel</button>
+                                <button type="submit" class="btn-primary">Create Shop</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- AI Profile Page -->
             <div class="page" id="ai-profile-page">
@@ -1389,6 +1557,27 @@
             <div class="profile-section">
                 <h3>Agent Identity</h3>
                 <div class="form-group">
+                    <label>Shop Type</label>
+                    <div class="radio-group" style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <label class="radio-label"
+                            style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="shopType" value="shop" checked
+                                onchange="toggleShopTypeDescription()">
+                            <span>Retail Shop (Products)</span>
+                        </label>
+                        <label class="radio-label"
+                            style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="shopType" value="career" onchange="toggleShopTypeDescription()">
+                            <span>Career / Portfolio (Skills & Achievements)</span>
+                        </label>
+                    </div>
+                    <small id="shop-type-desc"
+                        style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                        Standard retail shop for selling products with prices and stock.
+                    </small>
+                </div>
+
+                <div class="form-group">
                     <label>Agent Name</label>
                     <input type="text" id="agent-name" placeholder="Representative">
                     <small>The name your AI agent will use</small>
@@ -1449,6 +1638,130 @@
                     </label>
                 </div>
             </div>
+        </div>
+    </div>
+
+
+    <!-- Analytics Page -->
+    <div class="page" id="analytics-page">
+        <!-- Header -->
+        <div class="analytics-header">
+            <div class="analytics-header-content">
+                <div class="analytics-title-group">
+                    <button class="btn-refresh" onclick="switchPage('dashboard')" aria-label="Back to Home">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                        </svg>
+                    </button>
+                    <h2>📊 Analytics Dashboard</h2>
+                </div>
+                <button class="btn-secondary" onclick="loadAnalytics()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="analytics-content">
+            <!-- Overview Section -->
+            <section class="analytics-section">
+                <div class="section-header">
+                    <h3>📈 Overview</h3>
+                    <span class="section-badge">All Time</span>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <div class="card-icon">👥</div>
+                        <div class="card-content">
+                            <h4>Total Active Chats</h4>
+                            <div class="value" id="stat-active-chats">-</div>
+                            <small>Unique DMs</small>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="card-icon">💬</div>
+                        <div class="card-content">
+                            <h4>Avg Chat Length</h4>
+                            <div class="value" id="stat-avg-length">-</div>
+                            <small>Messages per contact</small>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="card-icon">📢</div>
+                        <div class="card-content">
+                            <h4>Ad Read Rate</h4>
+                            <div class="value" id="stat-read-rate">-</div>
+                            <small>Blue tick percentage</small>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="card-icon">🛡️</div>
+                        <div class="card-content">
+                            <h4>Avg Group Admins</h4>
+                            <div class="value" id="stat-avg-admins">-</div>
+                            <small>Per group</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Engagement Section -->
+            <section class="analytics-section">
+                <div class="section-header">
+                    <h3>🎯 Engagement Metrics</h3>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h4>Engagement Funnel</h4>
+                            <span class="chart-info">Message delivery pipeline</span>
+                        </div>
+                        <canvas id="engagementChart"></canvas>
+                    </div>
+                    <div class="chart-container" id="campaigns-chart-container">
+                        <div class="chart-header">
+                            <h4>Top Performing Campaigns</h4>
+                            <span class="chart-info">Read vs Reply rates</span>
+                        </div>
+                        <canvas id="campaignChart"></canvas>
+                        <div class="empty-state" id="campaigns-empty" style="display: none;">
+                            <div class="empty-icon">📭</div>
+                            <p>No campaign data yet</p>
+                            <small>Start a marketing campaign to see performance metrics</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Groups Section -->
+            <section class="analytics-section">
+                <div class="section-header">
+                    <h3>🏆 Top Groups</h3>
+                    <span class="section-badge">By member count</span>
+                </div>
+
+                <div class="table-container">
+                    <table class="analytics-table">
+                        <thead>
+                            <tr>
+                                <th>Group Name</th>
+                                <th>Members</th>
+                                <th>Admins</th>
+                                <th>Bot Age</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-groups-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="groups-empty" style="display: none;">
+                        <div class="empty-icon">👥</div>
+                        <p>No groups found</p>
+                        <small>Add the bot to WhatsApp groups to see analytics</small>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -1794,6 +2107,7 @@
 
                         <!-- Step 2: Time -->
                         <div class="wizard-step" id="wizard-step-2">
+                            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                             <div class="time-grid">
                                 <div class="time-input">
                                     <span>Morning</span>
@@ -1940,6 +2254,16 @@
             </div>
             <span>Groups</span>
         </a>
+        <a href="#" class="mobile-nav-item" data-page="analytics">
+            <div class="nav-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                </svg>
+            </div>
+            <span>Data</span>
+        </a>
         <a href="#" class="mobile-nav-item" data-page="ai-profile">
             <div class="nav-icon">
                 <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
@@ -1970,6 +2294,129 @@
             <span>Settings</span>
         </a>
     </nav>
+    </div>
+
+    <!-- Create Shop Modal -->
+    <div id="createShopModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Shop</h3>
+                <button class="close-modal" onclick="closeCreateShopModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createShopForm" onsubmit="handleCreateShop(event)">
+                    <div class="form-group">
+                        <label>Shop Name</label>
+                        <input type="text" id="shopName" required placeholder="e.g. My Awesome Store">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="shopDescription" required placeholder="What do you sell?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Shop Emoji/Icon</label>
+                        <input type="text" id="shopEmoji" value="🏪" style="width: 50px; text-align: center;">
+                    </div>
+                    <div class="form-group">
+                        <label>Shop Type</label>
+                        <div class="radio-group" style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+                            <label class="radio-option"
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="shopType" value="shop" checked
+                                    onchange="toggleShopTypeDescription()">
+                                <span class="radio-label">Retail Shop</span>
+                            </label>
+                            <label class="radio-option"
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="shopType" value="career"
+                                    onchange="toggleShopTypeDescription()">
+                                <span class="radio-label">Career Portfolio</span>
+                            </label>
+                        </div>
+                        <p id="shop-type-desc"
+                            style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
+                            Standard retail shop for selling products with prices and stock.
+                        </p>
+                    </div>
+                    <div class="modal-actions"
+                        style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn-secondary" onclick="closeCreateShopModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Create Shop</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Analytics Modal -->
+    <div id="groupAnalyticsModal" class="modal" style="display: none;">
+        <div class="modal-content large-modal" style="max-width: 900px; width: 90%;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="avatar-md" id="ga-avatar">G</div>
+                    <div>
+                        <h3 id="ga-subject" style="margin: 0;">Group Name</h3>
+                        <small id="ga-jid" class="text-muted">jid@g.us</small>
+                    </div>
+                </div>
+                <button class="close-modal" onclick="closeGroupAnalyticsModal()">&times;</button>
+            </div>
+            <div class="modal-body scrollable-content" style="max-height: 80vh; overflow-y: auto;">
+
+                <!-- KPI Grid -->
+                <div class="analytics-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2rem;">
+                    <div class="analytics-card">
+                        <h5>👥 Members</h5>
+                        <div class="value" id="ga-members">-</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h5>🛡️ Admins</h5>
+                        <div class="value" id="ga-admins">-</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h5>📢 Read Rate</h5>
+                        <div class="value" id="ga-read-rate">-</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h5>💬 Replies</h5>
+                        <div class="value" id="ga-replies">-</div>
+                    </div>
+                    <div class="analytics-card">
+                        <h5>🤖 Bot Age</h5>
+                        <div class="value" id="ga-bot-age">-</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="chart-container">
+                        <h4>Engagement Overview</h4>
+                        <canvas id="gaEngagementChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Member Composition</h4>
+                        <canvas id="gaRoleChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Member Table -->
+                <div class="table-container">
+                    <h4>Top Members / Admins</h4>
+                    <table class="analytics-table">
+                        <thead>
+                            <tr>
+                                <th>Phone</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ga-members-body">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Toast Container -->

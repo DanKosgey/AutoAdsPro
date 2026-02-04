@@ -150,12 +150,12 @@ body {
 
 /* Animated Background */
 .animated-bg {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
     overflow: hidden;
     pointer-events: none;
 }
@@ -414,6 +414,7 @@ body {
 }
 
 /* Main Content */
+/* Main Content */
 .main-content {
     flex: 1;
     overflow-y: auto;
@@ -424,13 +425,35 @@ body {
 .page {
     display: none;
     padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
     animation: slideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .page.active {
     display: block;
+}
+
+.page>* {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Analytics Page - Full Width Layout */
+.sidebar.hidden {
+    display: none;
+}
+
+#analytics-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+}
+
+#analytics-page>* {
+    max-width: 100%;
 }
 
 @keyframes slideIn {
@@ -451,6 +474,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-top: 0;
     margin-bottom: 2rem;
 }
 
@@ -3356,4 +3380,324 @@ textarea::placeholder {
     margin: 0;
     font-size: 0.9rem;
     color: var(--text-secondary);
+}
+
+/* Analytics Dashboard Styles */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* Fixed 4 columns for KPI header */
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.analytics-card {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Subtle border */
+    border-radius: 20px;
+    /* Softer corners */
+    padding: 1.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.analytics-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.analytics-card:hover::before {
+    opacity: 1;
+}
+
+.analytics-card h3,
+.analytics-card h5 {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.analytics-card .value {
+    font-size: 2.5rem;
+    /* Larger numbers */
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+    background: linear-gradient(135deg, white 30%, var(--primary-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+}
+
+.analytics-card small {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Charts Layout */
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* We assume the HTML has a wrapper div for charts. If not, we target .chart-container individually via grid if possible, 
+   but since they are siblings in HTML, we rely on the parent container style in HTML or we can style .chart-container to flex appropriately.
+   Actually, in index.html line 1676, there is a div with style="display: grid; ...". 
+   Let's target THAT div if we can, or just improve .chart-container visuals.
+*/
+
+.chart-container {
+    background: rgba(20, 20, 25, 0.6);
+    /* Darker background for contrast */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 2rem;
+    height: 400px;
+    /* Taller charts */
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.chart-container h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Table Styles - Pro Look */
+.table-container {
+    background: rgba(20, 20, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 2rem;
+    overflow: hidden;
+    margin-top: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.table-container h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.analytics-table th {
+    text-align: left;
+    padding: 1.2rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.analytics-table td {
+    padding: 1.2rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: middle;
+}
+
+.analytics-table tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Light Mode Overrides */
+[data-theme="light"] .analytics-card,
+[data-theme="light"] .chart-container,
+[data-theme="light"] .table-container {
+    background: white;
+    border-color: rgba(0, 0, 0, 0.08);
+    /* Stronger border */
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .analytics-card .value {
+    background: none;
+    -webkit-text-fill-color: var(--primary);
+    /* Solid primary color */
+}
+
+/* Responsive Grid */
+@media (max-width: 1200px) {
+    .analytics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Force charts to stack on mobile if the inline style allows, 
+       otherwise we might need to target the parent div in HTML. 
+       Since we can't easily target the inline-styled parent from here, 
+       we assume the user is on desktop based on "Pro" requirement. */
+}
+
+/* Page Subtitle */
+.page-subtitle {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Analytics Sections */
+.analytics-section {
+    margin-bottom: 3rem;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.section-badge {
+    padding: 0.4rem 0.8rem;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Improved Card Layout with Icons */
+.analytics-card {
+    flex-direction: row !important;
+    align-items: center !important;
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+}
+
+.card-content {
+    flex: 1;
+}
+
+.card-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* Chart Headers */
+.chart-header {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chart-header h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.chart-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Empty States */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.empty-state small {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+/* Light mode adjustments */
+[data-theme="light"] .section-header {
+    border-bottom-color: rgba(0, 0, 0, 0.05);
 }

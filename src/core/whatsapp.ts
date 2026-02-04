@@ -107,6 +107,16 @@ export class WhatsAppClient {
     }
   }
 
+  public async getGroupMetadata(jid: string) {
+    if (!this.sock) return null;
+    try {
+      return await this.sock.groupMetadata(jid);
+    } catch (error) {
+      console.error(`Failed to fetch metadata for ${jid}:`, error);
+      return null;
+    }
+  }
+
   async initialize() {
     this.isLoggingOut = false;
     console.log('🔌 Initializing Representative Agent...');
@@ -250,6 +260,20 @@ export class WhatsAppClient {
         const { ephemeralAdsService } = await import('../services/marketing/ephemeralAdsService');
         ephemeralAdsService.setClient(this);
 
+        // Initialize Group Sync
+        const { groupService } = await import('../services/groupService');
+        try {
+          console.log('🔄 Triggering initial group sync...');
+          const groups = await this.sock!.groupFetchAllParticipating();
+          if (groups) { // Check if groups exist
+            for (const jid of Object.keys(groups)) {
+              await groupService.syncGroup(jid, groups[jid]);
+            }
+          }
+        } catch (e) {
+          console.error('❌ Initial group sync failed:', e);
+        }
+
         console.log('🎯 Advanced queue system initialized');
 
         if (this.sock) {
@@ -260,6 +284,48 @@ export class WhatsAppClient {
 
         await this.messageSender.setOnline();
         console.log('👁️ Presence set to: Online');
+      }
+    });
+
+    // Track Group Updates
+    this.sock.ev.on('groups.update', async (updates) => {
+      const { groupService } = await import('../services/groupService');
+      for (const update of updates) {
+        try {
+          // Fetch full metadata again to be safe/simple
+          const metadata = await this.sock!.groupMetadata(update.id!);
+          await groupService.syncGroup(update.id!, metadata);
+        } catch (e) {
+          console.error(`Failed to sync updated group ${update.id}:`, e);
+        }
+      }
+    });
+
+    // Track Message Receipts (Reads)
+    this.sock.ev.on('message-receipt.update', async (events) => {
+      const { analyticsService } = await import('../services/analyticsService');
+      for (const event of events) {
+        if (event.receipt.readTimestamp) {
+          // It's a read event
+          const messageId = event.key.id!;
+          const userPhone = event.key.participant || event.key.remoteJid!; // In groups, participant is set
+          const remoteJid = event.key.remoteJid!;
+
+          // We only care if WE sent the message (fromMe) usually for ad tracking
+          // But Baileys receipt update might come for messages we sent
+          // event.key.fromMe should be true if we sent it
+
+          if (event.key.fromMe) {
+            await analyticsService.trackEngagement(
+              'read',
+              messageId,
+              null, // Campaign ID hard to link directly here unless we allow looking up message logs. For now null.
+              userPhone.split('@')[0], // Clean phone
+              remoteJid,
+              { timestamp: event.receipt.readTimestamp }
+            );
+          }
+        }
       }
     });
 
@@ -334,6 +400,21 @@ export class WhatsAppClient {
         }
 
         try {
+          // Check for Ad Replies (Engagement)
+          const quotedMsg = msg.message?.extendedTextMessage?.contextInfo;
+          if (quotedMsg && quotedMsg.stanzaId && quotedMsg.participant === this.sock?.user?.id.split(':')[0] + '@s.whatsapp.net') {
+            // Use lazy import to avoid circle
+            const { analyticsService } = await import('../services/analyticsService');
+            await analyticsService.trackEngagement(
+              'reply',
+              quotedMsg.stanzaId, // Original Ad Message ID
+              null,
+              jid.includes('@g.us') ? (msg.key.participant?.split('@')[0] || '') : jid.split('@')[0],
+              jid,
+              { replyText: text }
+            );
+          }
+
           await this.handleIncomingMessage(msg);
         } catch (err: any) {
           console.error('❌ Error handling message:', err.message);

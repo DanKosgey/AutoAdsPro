@@ -295,6 +295,18 @@ export const AI_TOOLS = [
                     properties: {},
                     required: []
                 }
+            },
+            {
+                name: "message_admins",
+                description: "Send a direct message to all administrators of the current group. Use this for reporting severe issues, requesting admin intervention, or when a user explicitly asks to speak to an admin.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        message: { type: "STRING", description: "The message content to send to the admins." },
+                        severity: { type: "STRING", description: "Urgency level: 'low', 'medium', 'high', 'critical'. Default 'medium'." }
+                    },
+                    required: ["message"]
+                }
             }
         ]
     }
@@ -658,6 +670,63 @@ export async function executeLocalTool(name: string, args: any, context: any) {
                 };
             } catch (e: any) {
                 return { error: `Send random failed: ${e.message}` };
+            }
+
+        case 'message_admins':
+            try {
+                const client = context?.client;
+                if (!client) {
+                    return { error: "WhatsApp Client not available. Cannot fetch admins." };
+                }
+
+                const currentGroupJid = context?.msg?.key?.remoteJid;
+                if (!currentGroupJid || !currentGroupJid.endsWith('@g.us')) {
+                    return { error: "This command can only be used within a group chat." };
+                }
+
+                const { message, severity = 'medium' } = args;
+
+                console.log(`👮‍♂️ Tool: Messaging Admins of ${currentGroupJid} (Severity: ${severity})`);
+
+                // Fetch group metadata to find admins
+                const groupMetadata = await client.getGroupMetadata(currentGroupJid);
+                if (!groupMetadata) {
+                    return { error: "Failed to fetch group metadata." };
+                }
+
+                const admins = groupMetadata.participants
+                    .filter((p: any) => p.admin === 'admin' || p.admin === 'superadmin')
+                    .map((p: any) => p.id);
+
+                if (admins.length === 0) {
+                    return { error: "No admins found in this group." };
+                }
+
+                const prefix = severity === 'critical' ? '🚨 *CRITICAL ALERT* 🚨\n\n' :
+                    severity === 'high' ? '⚠️ *High Priority* ⚠️\n\n' : '';
+
+                const fullMessage = `${prefix}🤖 *Agent Report from Group: ${groupMetadata.subject}*\n\n${message}`;
+
+                // Send to all admins in parallel
+                let sentCount = 0;
+                const sendPromises = admins.map(async (adminJid: string) => {
+                    try {
+                        await client.sendText(adminJid, fullMessage);
+                        sentCount++;
+                    } catch (e) {
+                        console.error(`Failed to message admin ${adminJid}:`, e);
+                    }
+                });
+
+                await Promise.all(sendPromises);
+
+                return {
+                    result: `✅ Reported to ${sentCount}/${admins.length} admins successfully.`
+                };
+
+            } catch (e: any) {
+                console.error("Message admins tool failed:", e);
+                return { error: `Failed to message admins: ${e.message}` };
             }
 
         default:

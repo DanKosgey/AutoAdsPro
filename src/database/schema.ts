@@ -281,3 +281,81 @@ export const systemSettings = pgTable('system_settings', {
     updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+
+// 17. ShopFlow: Shops
+export const shops = pgTable('shops', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    emoji: varchar('emoji', { length: 10 }).default('🏪'),
+    type: varchar('type', { length: 20 }).default('shop'), // 'shop' | 'career'
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// 18. ShopFlow: Products
+export const products = pgTable('products', {
+    id: serial('id').primaryKey(),
+    shopId: integer('shop_id').references(() => shops.id, { onDelete: 'cascade' }).notNull(),
+    name: varchar('name', { length: 200 }).notNull(),
+    description: text('description'),
+    price: integer('price').default(0), // Storing as simple number (or could be real)
+    stock: integer('stock').default(0),
+    imageUrl: text('image_url'), // Data URL or file path
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+    return {
+        shopIdx: index('product_shop_idx').on(table.shopId),
+    };
+});
+
+// 19. Analytics: Groups Metadata
+export const groups = pgTable('groups', {
+    jid: varchar('jid', { length: 100 }).primaryKey(),
+    subject: text('subject'),
+    description: text('description'),
+    creationTime: timestamp('creation_time'),
+    ownerJid: varchar('owner_jid', { length: 50 }),
+    totalMembers: integer('total_members').default(0),
+    adminsCount: integer('admins_count').default(0),
+    isAnnounce: boolean('is_announce').default(false), // Only admins can send
+    isRestricted: boolean('is_restricted').default(false), // Only admins can edit info
+    metadata: jsonb('metadata'), // Extra raw data
+    botJoinedAt: timestamp('bot_joined_at').defaultNow(), // When the bot was added or first synced
+    updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// 20. Analytics: Group Members (for Admin tracking)
+export const groupMembers = pgTable('group_members', {
+    id: serial('id').primaryKey(),
+    groupJid: varchar('group_jid', { length: 100 }).references(() => groups.jid, { onDelete: 'cascade' }).notNull(),
+    phone: varchar('phone', { length: 50 }).notNull(),
+    role: varchar('role', { length: 20 }).default('participant'), // 'admin', 'superadmin', 'participant'
+    isAdmin: boolean('is_admin').default(false),
+    joinedAt: timestamp('joined_at'),
+    lastSeen: timestamp('last_seen'), // Updated via presence
+    updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => {
+    return {
+        groupMemberIdx: index('group_member_pair_idx').on(table.groupJid, table.phone),
+        roleIdx: index('member_role_idx').on(table.role),
+    };
+});
+
+// 21. Analytics: Ad Engagements
+export const adEngagements = pgTable('ad_engagements', {
+    id: serial('id').primaryKey(),
+    campaignId: integer('campaign_id').references(() => marketingCampaigns.id),
+    groupJid: varchar('group_jid', { length: 100 }), // Optional, linking to group
+    userPhone: varchar('user_phone', { length: 50 }), // Who engaged
+    messageId: varchar('message_id', { length: 100 }), // The specific message ID
+    type: varchar('type', { length: 20 }).notNull(), // 'delivered', 'read', 'reply'
+    context: jsonb('context'), // Extra context (e.g., reply text)
+    createdAt: timestamp('created_at').defaultNow(),
+}, (table) => {
+    return {
+        campTypeIdx: index('eng_camp_type_idx').on(table.campaignId, table.type),
+        msgIdx: index('eng_msg_idx').on(table.messageId),
+    };
+});
