@@ -13,6 +13,7 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600;700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/styles_shop.css">
+    <link rel="stylesheet" href="/styles_new.css">
     <link rel="stylesheet" href="/styles_analytics.css">
     <!-- intl-tel-input plugin -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.6/build/css/intlTelInput.css">
@@ -724,20 +725,20 @@
                         <div class="shops-header">
                             <div>
                                 <h2 style="font-size: 1.75rem; color: var(--text-primary); margin-bottom: 0.5rem;">Your
-                                    Shops</h2>
-                                <p style="color: var(--text-secondary);">Manage your product catalog</p>
+                                    Collections</h2>
+                                <p style="color: var(--text-secondary);">Manage your shops and career portfolios</p>
                             </div>
-                            <button class="btn-primary" onclick="openCreateShopModal()" style="width: auto;">
-                                + Create New Shop
+                            <button class="btn-primary" onclick="openCollectionTypeModal()" style="width: auto;">
+                                + Create New
                             </button>
                         </div>
 
                         <div id="shopsGrid" class="shops-grid">
                             <!-- Populated by JS -->
                             <div class="empty-state">
-                                <div class="empty-state-icon">🏪</div>
-                                <h3 class="empty-state-text">No shops yet</h3>
-                                <p>Create your first shop to start adding products.</p>
+                                <div class="empty-state-icon">📦</div>
+                                <h3 class="empty-state-text">No collections yet</h3>
+                                <p>Create a shop for products or a career portfolio to showcase your skills.</p>
                             </div>
                         </div>
                     </div>
@@ -763,28 +764,28 @@
                         <div class="products-view">
                             <!-- Add Product Form -->
                             <div class="add-product-section">
-                                <h3>Add New Product</h3>
+                                <h3 id="addProductTitle">Add New Product</h3>
                                 <form id="addProductForm" onsubmit="handleAddProduct(event)">
                                     <div class="form-group">
-                                        <label>Product Name</label>
+                                        <label id="productNameLabel" for="productName">Product Name</label>
                                         <input type="text" id="productName" required
                                             placeholder="e.g. Wireless Headphones">
                                     </div>
 
-                                    <div class="form-group"
+                                    <div class="form-group" id="productPriceStockGroup"
                                         style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                        <div>
+                                        <div id="productPriceGroup">
                                             <label>Price</label>
-                                            <input type="number" id="productPrice" required placeholder="0.00">
+                                            <input type="number" id="productPrice" placeholder="0.00">
                                         </div>
-                                        <div>
+                                        <div id="productStockGroup">
                                             <label>Stock</label>
-                                            <input type="number" id="productStock" required placeholder="0">
+                                            <input type="number" id="productStock" placeholder="0">
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label>Description</label>
+                                        <label id="productDescLabel" for="productDesc">Description</label>
                                         <textarea id="productDesc" rows="3"
                                             placeholder="Describe your product..."></textarea>
                                     </div>
@@ -806,7 +807,8 @@
                                             Image</button>
                                     </div>
 
-                                    <button type="submit" class="btn-primary">Add Product</button>
+                                    <button type="submit" class="btn-primary" id="addProductSubmitBtn">Add
+                                        Product</button>
                                 </form>
                             </div>
 
@@ -820,30 +822,71 @@
                     </div>
                 </div>
 
-                <!-- Create Shop Modal -->
+                <!-- Collection Type Choice Modal -->
+                <div id="collectionTypeModal" class="modal" style="display: none;">
+                    <div class="modal-content" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h3>What would you like to create?</h3>
+                            <button class="btn-close" onclick="closeCollectionTypeModal()">×</button>
+                        </div>
+                        <div class="collection-type-grid">
+                            <div class="collection-type-card" onclick="selectCollectionType('shop')">
+                                <div class="collection-type-icon">🏪</div>
+                                <h4>Product Shop</h4>
+                                <p>Showcase and sell your products with prices, stock, and descriptions</p>
+                                <div class="collection-type-features">
+                                    <span>✓ Product catalog</span>
+                                    <span>✓ Pricing & inventory</span>
+                                    <span>✓ Sales tracking</span>
+                                </div>
+                            </div>
+                            <div class="collection-type-card" onclick="selectCollectionType('career')">
+                                <div class="collection-type-icon">💼</div>
+                                <h4>Career Portfolio</h4>
+                                <p>Showcase your skills, projects, and professional achievements</p>
+                                <div class="collection-type-features">
+                                    <span>✓ Skills & projects</span>
+                                    <span>✓ Professional profile</span>
+                                    <span>✓ Personal branding</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Shop/Career Modal -->
                 <div id="createShopModal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3>Create New Shop</h3>
+                            <h3 id="createModalTitle">Create New Shop</h3>
+                            <button class="btn-close" onclick="closeCreateShopModal()">×</button>
                         </div>
                         <form id="createShopForm" onsubmit="handleCreateShop(event)">
+                            <input type="hidden" id="collectionType" value="shop">
+
                             <div class="form-group">
-                                <label>Shop Name</label>
+                                <label id="nameLabel">Shop Name</label>
                                 <input type="text" id="shopName" required placeholder="e.g. Tech Store">
+                                <small id="nameHint">Give your shop a catchy name</small>
                             </div>
+
                             <div class="form-group">
-                                <label>Description</label>
-                                <textarea id="shopDescription"
+                                <label id="descLabel">Description</label>
+                                <textarea id="shopDescription" rows="3"
                                     placeholder="What kind of products do you sell?"></textarea>
+                                <small id="descHint">Describe what you offer</small>
                             </div>
+
                             <div class="form-group">
-                                <label>Shop Emoji Icon</label>
+                                <label>Icon Emoji</label>
                                 <input type="text" id="shopEmoji" placeholder="e.g. 🏪" maxlength="2">
+                                <small>Choose an emoji to represent your collection</small>
                             </div>
+
                             <div class="modal-buttons">
                                 <button type="button" class="btn-secondary"
                                     onclick="closeCreateShopModal()">Cancel</button>
-                                <button type="submit" class="btn-primary">Create Shop</button>
+                                <button type="submit" class="btn-primary" id="createSubmitBtn">Create Shop</button>
                             </div>
                         </form>
                     </div>
@@ -2375,51 +2418,81 @@
     </div>
 
     <!-- Create Shop Modal -->
+    <!-- Collection Type Selection Modal -->
+    <div id="collectionTypeModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Create New Collection</h3>
+                <button class="close-modal" onclick="closeCollectionTypeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+                    Choose the type of collection you want to create.
+                </p>
+
+                <div class="collection-type-grid">
+                    <!-- Retail Shop Option -->
+                    <div class="collection-type-card" onclick="selectCollectionType('shop')">
+                        <div class="collection-type-icon">🏪</div>
+                        <span class="collection-type-badge shop">Commerce</span>
+                        <h4>Retail Shop</h4>
+                        <p>Perfect for selling physical or digital products. Manage inventory, prices, and orders.</p>
+                        <div class="collection-type-features">
+                            <span>Product Catalog</span>
+                            <span>Stock Management</span>
+                            <span>Price Tracking</span>
+                        </div>
+                    </div>
+
+                    <!-- Career Portfolio Option -->
+                    <div class="collection-type-card" onclick="selectCollectionType('career')">
+                        <div class="collection-type-icon">💼</div>
+                        <span class="collection-type-badge career">Personal</span>
+                        <h4>Career Portfolio</h4>
+                        <p>Showcase your skills, projects, and professional experience to potential employers.</p>
+                        <div class="collection-type-features">
+                            <span>Project Showcase</span>
+                            <span>Skill Listing</span>
+                            <span>No Pricing/Stock</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Shop/Portfolio Modal (Dynamic) -->
     <div id="createShopModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Create New Shop</h3>
+                <h3 id="createModalTitle">Create New Shop</h3>
                 <button class="close-modal" onclick="closeCreateShopModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="createShopForm" onsubmit="handleCreateShop(event)">
+                    <input type="hidden" id="collectionType" value="shop">
+
                     <div class="form-group">
-                        <label>Shop Name</label>
+                        <label id="nameLabel">Shop Name</label>
                         <input type="text" id="shopName" required placeholder="e.g. My Awesome Store">
+                        <small id="nameHint">Give your shop a catchy name</small>
                     </div>
+
                     <div class="form-group">
-                        <label>Description</label>
+                        <label id="descLabel">Description</label>
                         <textarea id="shopDescription" required placeholder="What do you sell?"></textarea>
+                        <small id="descHint">Describe what you offer</small>
                     </div>
+
                     <div class="form-group">
-                        <label>Shop Emoji/Icon</label>
+                        <label>Icon / Emoji</label>
                         <input type="text" id="shopEmoji" value="🏪" style="width: 50px; text-align: center;">
                     </div>
-                    <div class="form-group">
-                        <label>Shop Type</label>
-                        <div class="radio-group" style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
-                            <label class="radio-option"
-                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="radio" name="shopType" value="shop" checked
-                                    onchange="toggleShopTypeDescription()">
-                                <span class="radio-label">Retail Shop</span>
-                            </label>
-                            <label class="radio-option"
-                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="radio" name="shopType" value="career"
-                                    onchange="toggleShopTypeDescription()">
-                                <span class="radio-label">Career Portfolio</span>
-                            </label>
-                        </div>
-                        <p id="shop-type-desc"
-                            style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
-                            Standard retail shop for selling products with prices and stock.
-                        </p>
-                    </div>
+
                     <div class="modal-actions"
                         style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
                         <button type="button" class="btn-secondary" onclick="closeCreateShopModal()">Cancel</button>
-                        <button type="submit" class="btn-primary">Create Shop</button>
+                        <button type="submit" class="btn-primary" id="createSubmitBtn">Create Shop</button>
                     </div>
                 </form>
             </div>

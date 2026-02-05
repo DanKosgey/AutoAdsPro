@@ -2156,13 +2156,74 @@ let currentImageData = null;
 
 // Expose functions to window
 
+// Collection Type Modal Functions
+window.openCollectionTypeModal = function () {
+    const modal = document.getElementById('collectionTypeModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeCollectionTypeModal = function () {
+    const modal = document.getElementById('collectionTypeModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+window.selectCollectionType = function (type) {
+    // Close the type selection modal
+    closeCollectionTypeModal();
+
+    // Set the collection type
+    document.getElementById('collectionType').value = type;
+
+    // Update modal content based on type
+    const modalTitle = document.getElementById('createModalTitle');
+    const nameLabel = document.getElementById('nameLabel');
+    const nameInput = document.getElementById('shopName');
+    const nameHint = document.getElementById('nameHint');
+    const descLabel = document.getElementById('descLabel');
+    const descTextarea = document.getElementById('shopDescription');
+    const descHint = document.getElementById('descHint');
+    const submitBtn = document.getElementById('createSubmitBtn');
+
+    if (type === 'career') {
+        modalTitle.textContent = 'Create Career Portfolio';
+        nameLabel.textContent = 'Portfolio Name';
+        nameInput.placeholder = 'e.g. John Doe - Software Engineer';
+        nameHint.textContent = 'Your professional name or title';
+        descLabel.textContent = 'Professional Summary';
+        descTextarea.placeholder = 'Describe your skills, experience, and what you offer...';
+        descHint.textContent = 'Highlight your expertise and achievements';
+        submitBtn.textContent = 'Create Portfolio';
+        document.getElementById('shopEmoji').placeholder = 'e.g. 💼';
+    } else {
+        modalTitle.textContent = 'Create New Shop';
+        nameLabel.textContent = 'Shop Name';
+        nameInput.placeholder = 'e.g. Tech Store';
+        nameHint.textContent = 'Give your shop a catchy name';
+        descLabel.textContent = 'Description';
+        descTextarea.placeholder = 'What kind of products do you sell?';
+        descHint.textContent = 'Describe what you offer';
+        submitBtn.textContent = 'Create Shop';
+        document.getElementById('shopEmoji').placeholder = 'e.g. 🏪';
+    }
+
+    // Open the create modal
+    openCreateShopModal();
+};
+
 window.openCreateShopModal = function () {
     const modal = document.getElementById('createShopModal');
     if (modal) {
         modal.style.display = 'flex';
         document.getElementById('createShopForm').reset();
-        // Reset radio description
-        document.getElementById('shop-type-desc').textContent = 'Standard retail shop for selling products with prices and stock.';
+        // Restore the collection type if it was set
+        const collectionType = document.getElementById('collectionType').value;
+        if (collectionType) {
+            document.getElementById('collectionType').value = collectionType;
+        }
     }
 };
 
@@ -2173,22 +2234,19 @@ window.closeCreateShopModal = function () {
     }
 };
 
-// Ensure this is globally available for the radio button onchange
-window.toggleShopTypeDescription = function () {
-    const type = document.querySelector('input[name="shopType"]:checked').value;
-    const desc = document.getElementById('shop-type-desc');
-    desc.textContent = 'Standard retail shop for selling products with prices and stock.';
-}
+
 
 
 window.handleCreateShop = async function (e) {
     e.preventDefault();
 
+    const collectionType = document.getElementById('collectionType').value || 'shop';
+
     const shopData = {
         name: document.getElementById('shopName').value,
         description: document.getElementById('shopDescription').value,
-        emoji: document.getElementById('shopEmoji').value || '🏪',
-        type: document.querySelector('input[name="shopType"]:checked').value
+        emoji: document.getElementById('shopEmoji').value || (collectionType === 'career' ? '💼' : '🏪'),
+        type: collectionType
     };
 
     try {
@@ -2202,14 +2260,27 @@ window.handleCreateShop = async function (e) {
         if (result && result.success) {
             closeCreateShopModal();
             loadShops();
-            showToast('Shop created successfully!', 'success');
+            const itemType = collectionType === 'career' ? 'Portfolio' : 'Shop';
+            showToast(`${itemType} created successfully!`, 'success');
         } else {
-            showToast('Failed to create shop', 'error');
+            showToast('Failed to create collection', 'error');
         }
     } catch (error) {
-        console.error('Error creating shop:', error);
-        showToast('Error creating shop', 'error');
+        console.error('Error creating collection:', error);
+        showToast('Error creating collection', 'error');
     }
+};
+
+window.showShopsView = function () {
+    document.getElementById('products-view').style.display = 'none';
+    document.getElementById('shops-view').style.display = 'block';
+
+    // Reset state
+    window.currentShopId = null;
+    window.currentShopType = null;
+
+    // Reload shops to ensure latest data
+    loadShops();
 };
 
 window.loadShops = async function () {
@@ -2245,13 +2316,16 @@ window.loadShops = async function () {
                                 <div class="stat-label">Value</div>
                             </div>`;
 
-                const typeBadge = isCareer ? '<span style="font-size:0.7em; background:var(--primary-color); padding:2px 6px; border-radius:4px; color:white; margin-left:8px; vertical-align:middle">Portfolio</span>' : '';
+                const typeBadge = isCareer ?
+                    '<span class="collection-type-badge career">Portfolio</span>' :
+                    '<span class="collection-type-badge shop">Shop</span>';
 
                 return `
                     <div class="shop-card" onclick="openShop(${shop.id})" style="animation-delay: ${index * 0.1}s">
+                        ${typeBadge}
                         <button class="delete-shop-btn" onclick="event.stopPropagation(); deleteShop(${shop.id})">×</button>
                         <div class="shop-icon">${shop.emoji}</div>
-                        <div class="shop-name">${shop.name} ${typeBadge}</div>
+                        <div class="shop-name">${shop.name}</div>
                         <div class="shop-description">${shop.description || ''}</div>
                         <div class="shop-stats">
                             <div class="stat">
@@ -2307,29 +2381,29 @@ window.openShop = async function (shopId) {
 
         // Adjust UI based on type
         const isCareer = shop.type === 'career';
-        const productAddBtn = document.querySelector('#products-view .btn-primary');
-        if (productAddBtn) productAddBtn.textContent = isCareer ? '+ Add Skill/Project' : '+ Add Product';
 
-        // Adjust Add Product Modal inputs
-        const priceGroup = document.getElementById('productPriceGroup');
-        const stockGroup = document.getElementById('productStockGroup');
-        const nameLabel = document.querySelector('label[for="productName"]');
-        const descLabel = document.querySelector('label[for="productDescription"]');
-
-        // Store type on the modal for later use (or assume currentShopId lookup)
-        window.currentShopType = shop.type;
+        const addTitle = document.getElementById('addProductTitle');
+        const submitBtn = document.getElementById('addProductSubmitBtn');
+        const nameLabel = document.getElementById('productNameLabel');
+        const descLabel = document.getElementById('productDescLabel');
+        const priceStockGroup = document.getElementById('productPriceStockGroup');
 
         if (isCareer) {
-            if (priceGroup) priceGroup.style.display = 'none';
-            if (stockGroup) stockGroup.style.display = 'none';
+            if (addTitle) addTitle.textContent = 'Add Skill or Project';
+            if (submitBtn) submitBtn.textContent = 'Add to Portfolio';
             if (nameLabel) nameLabel.textContent = 'Skill / Project Name';
             if (descLabel) descLabel.textContent = 'Description / Details';
+            if (priceStockGroup) priceStockGroup.style.display = 'none';
         } else {
-            if (priceGroup) priceGroup.style.display = 'block';
-            if (stockGroup) stockGroup.style.display = 'block';
+            if (addTitle) addTitle.textContent = 'Add New Product';
+            if (submitBtn) submitBtn.textContent = 'Add Product';
             if (nameLabel) nameLabel.textContent = 'Product Name';
             if (descLabel) descLabel.textContent = 'Description';
+            if (priceStockGroup) priceStockGroup.style.display = 'grid';
         }
+
+        // Store type on the modal for later use
+        window.currentShopType = shop.type;
 
         renderProducts(shop.products, shop.type);
     } catch (error) {
@@ -2441,10 +2515,18 @@ window.handleAddProduct = async function (e) {
     btn.textContent = 'Adding...';
     btn.disabled = true;
 
+    // Handle career vs shop types
+    const priceInput = document.getElementById('productPrice').value;
+    const stockInput = document.getElementById('productStock').value;
+
+    // Default to 0 if empty (career case) or invalid
+    const price = priceInput ? parseFloat(priceInput) : 0;
+    const stock = stockInput ? parseInt(stockInput) : 0;
+
     const productData = {
         name: document.getElementById('productName').value,
-        price: parseFloat(document.getElementById('productPrice').value),
-        stock: parseInt(document.getElementById('productStock').value),
+        price: price,
+        stock: stock,
         description: document.getElementById('productDesc').value,
         image: currentImageData || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="20" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'
     };
