@@ -1518,6 +1518,7 @@ window.submitMiniCampaign = async function () {
     const btn = document.getElementById('btn-submit');
     if (btn.disabled) return; // Prevent double submission
 
+
     const name = document.getElementById('mini-camp-name').value;
     if (!name) {
         showToast("Please enter a campaign name", "error");
@@ -1527,27 +1528,30 @@ window.submitMiniCampaign = async function () {
     btn.disabled = true;
     btn.innerHTML = 'Creating...';
 
+    // Get time values only if the slot is enabled
+    const morningEnabled = document.getElementById('toggle-morning').checked;
+    const afternoonEnabled = document.getElementById('toggle-afternoon').checked;
+    const eveningEnabled = document.getElementById('toggle-evening').checked;
+
+    // Validate at least one slot is enabled
+    if (!morningEnabled && !afternoonEnabled && !eveningEnabled) {
+        showToast("Please enable at least one time slot", "error");
+        btn.disabled = false;
+        btn.innerHTML = 'Create Campaign <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>';
+        return;
+    }
+
     const payload = {
         name: name,
-        morningTime: document.getElementById('mini-time-m').value,
-        afternoonTime: document.getElementById('mini-time-a').value,
-        eveningTime: document.getElementById('mini-time-e').value,
+        morningTime: morningEnabled ? document.getElementById('mini-time-m').value : null,
+        afternoonTime: afternoonEnabled ? document.getElementById('mini-time-a').value : null,
+        eveningTime: eveningEnabled ? document.getElementById('mini-time-e').value : null,
         businessDescription: document.getElementById('mini-business-desc').value || null,
         productInfo: document.getElementById('mini-product-info').value,
         uniqueSellingPoint: document.getElementById('mini-usp').value,
         brandVoice: document.getElementById('mini-voice').value,
         companyLink: document.getElementById('mini-company-link').value || null,
-        // targetAudience is inferred from product or can be separate? 
-        // In this UI we removed targetAudience text input favoring group selection. 
-        // But backend might need it for ad copy generation.
-        // Let's assume we pass empty string or handle it.
-        // Let's restore Target Audience text input in Step 1 in index.html later?
-        // Or assume "Audience" step covers it? No, Audience step is for GROUPS.
-        // Ad Copy needs "Audience Description".
-        // I should have kept it. I'll add "Audience Description" to Step 1 in index.html later?
-        // Wait, I can just use "Product Info" + "USP". 
-        // Or I can add "Target Audience" text field back to Step 1 in index.html.
-        // For now, I'll send the value if element exists, or default.
+
     };
 
     // Add targetAudience text if element exists (I might add it back)
@@ -1646,9 +1650,29 @@ window.editMiniCampaign = function (id) {
         document.getElementById('mini-business-desc-raw').value = '';
     }
 
+
     document.getElementById('mini-time-m').value = campaign.morningTime || "07:00";
     document.getElementById('mini-time-a').value = campaign.afternoonTime || "13:00";
     document.getElementById('mini-time-e').value = campaign.eveningTime || "19:00";
+
+    // Set toggle states based on whether times are null
+    const morningToggle = document.getElementById('toggle-morning');
+    const afternoonToggle = document.getElementById('toggle-afternoon');
+    const eveningToggle = document.getElementById('toggle-evening');
+
+    if (morningToggle) {
+        morningToggle.checked = campaign.morningTime !== null;
+        toggleTimeSlot('morning');
+    }
+    if (afternoonToggle) {
+        afternoonToggle.checked = campaign.afternoonTime !== null;
+        toggleTimeSlot('afternoon');
+    }
+    if (eveningToggle) {
+        eveningToggle.checked = campaign.eveningTime !== null;
+        toggleTimeSlot('evening');
+    }
+
 
     // Set Editing Targets (Handle potential issues if targetGroups is null)
     window.currentEditingTargets = Array.isArray(campaign.targetGroups) ? campaign.targetGroups : [];
@@ -1691,6 +1715,33 @@ window.deleteMiniCampaign = async function (id) {
 // Make globally available
 window.refreshCampaigns = refreshCampaigns;
 window.loadMarketing = loadMarketing;
+
+// ==========================================
+// TIME SLOT TOGGLE FUNCTIONALITY
+// ==========================================
+
+window.toggleTimeSlot = function (slot) {
+    const card = document.querySelector(`.time-slot-card[data-slot="${slot}"]`);
+    const toggle = document.getElementById(`toggle-${slot}`);
+    const body = document.getElementById(`body-${slot}`);
+
+    if (toggle.checked) {
+        // Enable the slot
+        card.classList.remove('disabled');
+        body.style.maxHeight = '200px';
+        body.style.opacity = '1';
+    } else {
+        // Disable the slot
+        card.classList.add('disabled');
+        body.style.maxHeight = '0';
+        body.style.opacity = '0';
+    }
+
+    // Update review summary if we're on that step
+    if (typeof updateReviewSummary === 'function') {
+        updateReviewSummary();
+    }
+};
 
 // ==========================================
 // STEP INDICATOR WIZARD LOGIC
@@ -1891,9 +1942,23 @@ window.toggleGroupSelection = function (el) {
 
 function updateReviewSummary() {
     const name = document.getElementById('mini-camp-name').value;
+
+    // Get enabled time slots
+    const morningEnabled = document.getElementById('toggle-morning')?.checked;
+    const afternoonEnabled = document.getElementById('toggle-afternoon')?.checked;
+    const eveningEnabled = document.getElementById('toggle-evening')?.checked;
+
     const timeM = document.getElementById('mini-time-m').value;
     const timeA = document.getElementById('mini-time-a').value;
     const timeE = document.getElementById('mini-time-e').value;
+
+    // Build schedule text with only enabled slots
+    const scheduleParts = [];
+    if (morningEnabled) scheduleParts.push(`🌅 ${timeM}`);
+    if (afternoonEnabled) scheduleParts.push(`☀️ ${timeA}`);
+    if (eveningEnabled) scheduleParts.push(`🌙 ${timeE}`);
+
+    const scheduleText = scheduleParts.length > 0 ? scheduleParts.join(' • ') : 'No time slots enabled';
 
     // Count selected groups
     const checkboxes = document.querySelectorAll('#modal-audience-list .group-checkbox:checked');
@@ -1903,7 +1968,7 @@ function updateReviewSummary() {
     if (nameEl) nameEl.textContent = name;
 
     const schedEl = document.getElementById('review-schedule');
-    if (schedEl) schedEl.textContent = `${timeM} / ${timeA} / ${timeE}`;
+    if (schedEl) schedEl.textContent = scheduleText;
 
     const audEl = document.getElementById('review-audience');
     if (audEl) audEl.textContent = audienceText;

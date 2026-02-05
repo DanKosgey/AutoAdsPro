@@ -1415,21 +1415,99 @@
 
                                 <!-- Step 2: Timing -->
                                 <div class="marketing-wizard-step" data-step="2" style="display: none;">
-                                    <p style="margin-bottom: 1rem; color: var(--text-secondary);">Set the times for your
-                                        daily automated posts.</p>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                                        <div class="marketing-form-group">
-                                            <label class="marketing-form-label">Morning</label>
-                                            <input type="time" id="mini-time-m" class="marketing-form-input">
+                                    <p style="margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
+                                        Choose when to post your automated ads. Toggle time slots on or off and set your
+                                        preferred times.
+                                    </p>
+
+                                    <!-- Time Slot Cards -->
+                                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                        <!-- Morning Slot -->
+                                        <div class="time-slot-card" data-slot="morning">
+                                            <div class="time-slot-header">
+                                                <div class="time-slot-info">
+                                                    <div class="time-slot-icon">🌅</div>
+                                                    <div>
+                                                        <h4 class="time-slot-title">Morning</h4>
+                                                        <p class="time-slot-desc">Catch early risers and professionals
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <label class="time-slot-toggle">
+                                                    <input type="checkbox" id="toggle-morning" checked
+                                                        onchange="toggleTimeSlot('morning')">
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                            <div class="time-slot-body" id="body-morning">
+                                                <div class="time-input-wrapper">
+                                                    <label class="time-input-label">Post Time</label>
+                                                    <input type="time" id="mini-time-m"
+                                                        class="marketing-form-input time-input" value="07:00">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="marketing-form-group">
-                                            <label class="marketing-form-label">Afternoon</label>
-                                            <input type="time" id="mini-time-a" class="marketing-form-input">
+
+                                        <!-- Afternoon Slot -->
+                                        <div class="time-slot-card" data-slot="afternoon">
+                                            <div class="time-slot-header">
+                                                <div class="time-slot-info">
+                                                    <div class="time-slot-icon">☀️</div>
+                                                    <div>
+                                                        <h4 class="time-slot-title">Afternoon</h4>
+                                                        <p class="time-slot-desc">Reach people during lunch breaks</p>
+                                                    </div>
+                                                </div>
+                                                <label class="time-slot-toggle">
+                                                    <input type="checkbox" id="toggle-afternoon" checked
+                                                        onchange="toggleTimeSlot('afternoon')">
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                            <div class="time-slot-body" id="body-afternoon">
+                                                <div class="time-input-wrapper">
+                                                    <label class="time-input-label">Post Time</label>
+                                                    <input type="time" id="mini-time-a"
+                                                        class="marketing-form-input time-input" value="13:00">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="marketing-form-group">
-                                            <label class="marketing-form-label">Evening</label>
-                                            <input type="time" id="mini-time-e" class="marketing-form-input">
+
+                                        <!-- Evening Slot -->
+                                        <div class="time-slot-card" data-slot="evening">
+                                            <div class="time-slot-header">
+                                                <div class="time-slot-info">
+                                                    <div class="time-slot-icon">🌙</div>
+                                                    <div>
+                                                        <h4 class="time-slot-title">Evening</h4>
+                                                        <p class="time-slot-desc">Connect with people relaxing at home
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <label class="time-slot-toggle">
+                                                    <input type="checkbox" id="toggle-evening" checked
+                                                        onchange="toggleTimeSlot('evening')">
+                                                    <span class="toggle-slider"></span>
+                                                </label>
+                                            </div>
+                                            <div class="time-slot-body" id="body-evening">
+                                                <div class="time-input-wrapper">
+                                                    <label class="time-input-label">Post Time</label>
+                                                    <input type="time" id="mini-time-e"
+                                                        class="marketing-form-input time-input" value="19:00">
+                                                </div>
+                                            </div>
                                         </div>
+                                    </div>
+
+                                    <div class="time-slot-tip">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Tip: Enable at least one time slot. Disabled slots won't post any
+                                            ads.</span>
                                     </div>
                                 </div>
 

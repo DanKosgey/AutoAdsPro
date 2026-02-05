@@ -230,6 +230,7 @@
     margin-bottom: 1rem;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -503,4 +504,238 @@
 
 .btn-text:hover {
     color: var(--accent);
+}
+
+/* ---------------------------------------------------- */
+/*  TIME SLOT CARDS (Enhanced Timing UI)  */
+/* ---------------------------------------------------- */
+
+.time-slot-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.time-slot-card:hover {
+    border-color: rgba(168, 85, 247, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.time-slot-card.disabled {
+    opacity: 0.5;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.time-slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.time-slot-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.time-slot-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.time-slot-icon {
+    font-size: 2rem;
+    line-height: 1;
+    filter: grayscale(0);
+    transition: filter 0.3s ease;
+}
+
+.time-slot-card.disabled .time-slot-icon {
+    filter: grayscale(1);
+    opacity: 0.4;
+}
+
+.time-slot-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.time-slot-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Toggle Switch */
+.time-slot-toggle {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    cursor: pointer;
+}
+
+.time-slot-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
+    border-radius: 34px;
+    transition: all 0.3s ease;
+}
+
+.toggle-slider:before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 3px;
+    background-color: var(--text-secondary);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.time-slot-toggle input:checked+.toggle-slider {
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+    border-color: #a855f7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+.time-slot-toggle input:checked+.toggle-slider:before {
+    transform: translateX(24px);
+    background-color: white;
+}
+
+/* Time Slot Body */
+.time-slot-body {
+    padding: 0 1.5rem 1.25rem 1.5rem;
+    max-height: 200px;
+    opacity: 1;
+    transition: all 0.3s ease;
+}
+
+.time-slot-card.disabled .time-slot-body {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+.time-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.time-input-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.time-input {
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease;
+}
+
+.time-input:focus {
+    outline: none;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.time-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* Time Slot Tip */
+.time-slot-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: 12px;
+    color: #06b6d4;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.time-slot-tip svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    to {
+        max-height: 200px;
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        max-height: 200px;
+        opacity: 1;
+    }
+
+    to {
+        max-height: 0;
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .time-slot-header {
+        padding: 1rem;
+    }
+
+    .time-slot-body {
+        padding: 0 1rem 1rem 1rem;
+    }
+
+    .time-slot-icon {
+        font-size: 1.5rem;
+    }
+
+    .time-slot-title {
+        font-size: 1rem;
+    }
+
+    .time-slot-desc {
+        font-size: 0.8rem;
+    }
 }
