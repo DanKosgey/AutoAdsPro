@@ -267,45 +267,12 @@ CREATE INDEX IF NOT EXISTS "product_shop_idx" ON "products" ("shop_id");--> stat
 CREATE INDEX IF NOT EXISTS "group_member_pair_idx" ON "group_members" ("group_jid","phone");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "member_role_idx" ON "group_members" ("role");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "eng_camp_type_idx" ON "ad_engagements" ("campaign_id","type");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "eng_msg_idx" ON "ad_engagements" ("message_id");--> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "conversations" ADD CONSTRAINT "conversations_contact_phone_contacts_phone_fk" FOREIGN KEY ("contact_phone") REFERENCES "contacts"("phone") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "message_logs" ADD CONSTRAINT "message_logs_contact_phone_contacts_phone_fk" FOREIGN KEY ("contact_phone") REFERENCES "contacts"("phone") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "report_queue" ADD CONSTRAINT "report_queue_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "conversations"("id") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "scheduled_posts" ADD CONSTRAINT "scheduled_posts_campaign_id_marketing_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "marketing_campaigns"("id") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "products" ADD CONSTRAINT "products_shop_id_shops_id_fk" FOREIGN KEY ("shop_id") REFERENCES "shops"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "group_members" ADD CONSTRAINT "group_members_group_jid_groups_jid_fk" FOREIGN KEY ("group_jid") REFERENCES "groups"("jid") ON DELETE cascade ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
---> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "ad_engagements" ADD CONSTRAINT "ad_engagements_campaign_id_marketing_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "marketing_campaigns"("id") ON DELETE no action ON UPDATE no action;
-EXCEPTION
- WHEN duplicate_object THEN null;
-END $$;
+CREATE INDEX IF NOT EXISTS "eng_msg_idx" ON "ad_engagements" ("message_id");
+
+ALTER TABLE "conversations" ADD CONSTRAINT "conversations_contact_phone_contacts_phone_fk" FOREIGN KEY ("contact_phone") REFERENCES "contacts"("phone") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "message_logs" ADD CONSTRAINT "message_logs_contact_phone_contacts_phone_fk" FOREIGN KEY ("contact_phone") REFERENCES "contacts"("phone") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "report_queue" ADD CONSTRAINT "report_queue_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "conversations"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "scheduled_posts" ADD CONSTRAINT "scheduled_posts_campaign_id_marketing_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "marketing_campaigns"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "products" ADD CONSTRAINT "products_shop_id_shops_id_fk" FOREIGN KEY ("shop_id") REFERENCES "shops"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "group_members" ADD CONSTRAINT "group_members_group_jid_groups_jid_fk" FOREIGN KEY ("group_jid") REFERENCES "groups"("jid") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "ad_engagements" ADD CONSTRAINT "ad_engagements_campaign_id_marketing_campaigns_id_fk" FOREIGN KEY ("campaign_id") REFERENCES "marketing_campaigns"("id") ON DELETE no action ON UPDATE no action;

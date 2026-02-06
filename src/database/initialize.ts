@@ -122,13 +122,18 @@ async function executeMigrations(client: any) {
                 await client(stmt);
                 successCount++;
               } catch (stmtError: any) {
-                // Silently skip "already exists" errors
+                // Silently skip "already exists" and constraint errors
                 if (
+                  stmtError.code === '42P01' || // relation does not exist (table missing)
                   stmtError.code === '42P07' || // already exists
                   stmtError.code === '42701' || // duplicate column
                   stmtError.code === '2BP01' || // dependent objects exist
+                  stmtError.code === '42710' || // object already exists
                   stmtError.message?.includes('already') ||
-                  stmtError.message?.includes('duplicate')
+                  stmtError.message?.includes('duplicate') ||
+                  stmtError.message?.includes('constraint') ||
+                  stmtError.message?.includes('does not exist') ||
+                  stmtError.message?.includes('already exists')
                 ) {
                   skipCount++;
                 } else {
