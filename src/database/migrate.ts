@@ -15,6 +15,10 @@ export async function runMigrations() {
         console.log('✅ Database connection successful');
 
         // Initialize direct SQL executor for manual migrations
+        if (!config.databaseUrl) {
+            console.warn('⚠️ DATABASE_URL not set, skipping manual SQL migrations');
+            return;
+        }
         const sql = neon(config.databaseUrl);
 
         // Step 2: Run drizzle auto-migrations from drizzle/ folder
@@ -62,7 +66,9 @@ export async function runMigrations() {
 
                     for (const statement of statements) {
                         try {
-                            await sql.query(statement);
+                            // Use the sql tagged template literal (note: can't use dynamic strings directly)
+                            // Neon's sql function requires static strings, so we need to use it carefully
+                            await sql(statement as any);
                         } catch (execError: any) {
                             // Ignore "already exists" errors
                             if (execError.code === '42P07' || execError.message?.includes('already exists')) {
@@ -93,7 +99,7 @@ export async function runMigrations() {
         
         for (const table of criticalTables) {
             try {
-                await sql.query(`SELECT 1 FROM ${table} LIMIT 1`);
+                await sql(`SELECT 1 FROM ${table} LIMIT 1` as any);
                 console.log(`  ✅ ${table}`);
             } catch (error: any) {
                 if (!error.message?.includes('does not exist')) {
