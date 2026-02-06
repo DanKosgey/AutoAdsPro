@@ -22,6 +22,7 @@ import { WorkerPool } from '../services/queue/workerPool';
 import { schedulerService } from '../services/scheduler';
 import { ConcurrencyController } from '../services/queue/concurrencyController';
 import { groupMetadataLimiter } from '../utils/rateLimiter';
+import { groupMetadataCacheService } from '../services/groupMetadataCache';
 
 export class WhatsAppClient {
   private sock: WASocket | undefined;
@@ -117,6 +118,47 @@ export class WhatsAppClient {
       );
     } catch (error) {
       console.error(`Failed to fetch metadata for ${jid}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get group metadata with caching - checks cache first, falls back to API if stale
+   * Much faster for frequently accessed groups
+   */
+  public async getCachedGroupMetadata(jid: string, forceRefresh: boolean = false) {
+    if (!this.sock) return null;
+
+    try {
+      // Check cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cached = await groupMetadataCacheService.getOrNull(jid);
+        if (cached) {
+          return cached;
+        }
+      }
+
+      // Cache miss or stale - fetch from API
+      console.log(`🔄 Fetching fresh metadata for ${jid}...`);
+      const metadata = await groupMetadataLimiter.execute(
+        () => this.sock!.groupMetadata(jid),
+        `getCachedGroupMetadata(${jid})`
+      );
+
+      if (metadata) {
+        // Store in cache
+        const cached = groupMetadataCacheService.setFromApi(jid, metadata);
+        return cached;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Failed to fetch metadata for ${jid}:`, error);
+      // Try to return stale cache as fallback
+      const staleCache = await groupMetadataCacheService.getOrNull(jid);
+      if (staleCache) {
+        console.log(`⚠️ Using stale cache for ${jid} due to API error`);
+        return staleCache;
+      }
       return null;
     }
   }
