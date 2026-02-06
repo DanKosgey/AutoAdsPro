@@ -1,4 +1,4 @@
-import { neon, sql } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import { config } from '../config/env';
 import path from 'path';
 import fs from 'fs';
