@@ -105,48 +105,55 @@ async function executeMigrations(client: any) {
       console.log(`  🔄 Executing: ${file}`);
 
       try {
-        // Split by --> statement-breakpoint
-        const blocks = sqlContent.split('-->');
+        // Split migration file by the --> statement-breakpoint markers
+        const parts = sqlContent.split('-->');
         let successCount = 0;
         let skipCount = 0;
 
-        for (const block of blocks) {
-          const statements = block
+        for (const part of parts) {
+          const statement = part
+            .replace('statement-breakpoint', '') // Remove marker text
+            .trim();
+          
+          // Skip empty parts and comments
+          if (!statement || statement.length < 10 || statement.startsWith('--')) {
+            continue;
+          }
+
+          // Split by semicolon for multiple statements in one part
+          const statements = statement
             .split(';')
             .map(s => s.trim())
-            .filter(s => s.length > 0 && !s.startsWith('--') && !s.startsWith('statement-breakpoint'));
+            .filter(s => s.length > 10 && !s.startsWith('--'));
 
           for (const stmt of statements) {
-            if (stmt.length > 10) {
-              try {
-                await client(stmt);
-                successCount++;
-              } catch (stmtError: any) {
-                // Silently skip "already exists" and constraint errors
-                if (
-                  stmtError.code === '42P01' || // relation does not exist (table missing)
-                  stmtError.code === '42P07' || // already exists
-                  stmtError.code === '42701' || // duplicate column
-                  stmtError.code === '2BP01' || // dependent objects exist
-                  stmtError.code === '42710' || // object already exists
-                  stmtError.message?.includes('already') ||
-                  stmtError.message?.includes('duplicate') ||
-                  stmtError.message?.includes('constraint') ||
-                  stmtError.message?.includes('does not exist') ||
-                  stmtError.message?.includes('already exists')
-                ) {
-                  skipCount++;
-                } else {
-                  console.warn(`      ⚠️ Statement error ${stmtError.code}: ${stmtError.message?.substring(0, 60)}`);
-                }
+            try {
+              await client(stmt);
+              successCount++;
+            } catch (stmtError: any) {
+              // Silently skip known error codes
+              if (
+                stmtError.code === '42P01' || // relation does not exist
+                stmtError.code === '42P07' || // already exists
+                stmtError.code === '42701' || // duplicate column
+                stmtError.code === '2BP01' || // dependent objects exist
+                stmtError.code === '42710' || // object already exists
+                stmtError.message?.includes('already') ||
+                stmtError.message?.includes('duplicate') ||
+                stmtError.message?.includes('constraint') ||
+                stmtError.message?.includes('does not exist') ||
+                stmtError.message?.includes('already exists')
+              ) {
+                skipCount++;
+              } else {
+                // Log unexpected errors
+                console.warn(`      ⚠️ Statement error ${stmtError.code}: ${stmtError.message?.substring(0, 60)}`);
               }
             }
           }
         }
         
-        if (successCount > 0) {
-          console.log(`    ✅ ${successCount} statements executed (${skipCount} existing)`);
-        }
+        console.log(`    ✅ ${successCount} statements executed (${skipCount} skipped)`);
       } catch (error: any) {
         console.warn(`  ⚠️ ${file}: ${error.message?.substring(0, 80)}`);
       }
