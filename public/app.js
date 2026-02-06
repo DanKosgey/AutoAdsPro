@@ -1028,32 +1028,17 @@ async function loadUserProfile() {
             const countryCode = document.getElementById('owner-country-code');
             const originalText = btn.textContent;
 
-            // Basic safety checks
-            if (!input || !countryCode || !btn) {
-                console.error('Owner phone elements not found in DOM.');
+            // Validate phone number
+            const phoneNumber = input.value.trim();
+            if (!phoneNumber) {
+                showToast('Please enter a phone number', 'error');
                 return;
             }
 
-            // Normalize phone number (digits only)
-            const rawPhone = input.value || '';
-            const phoneDigits = rawPhone.replace(/[^0-9]/g, '');
-            if (!phoneDigits) {
-                showToast('Please enter a valid phone number', 'error');
-                return;
-            }
+            // Combine country code and phone number
+            const fullPhone = countryCode.value + phoneNumber;
 
-            // Normalize country code (digits only, then add +)
-            const rawCode = countryCode.value || '';
-            const codeDigits = rawCode.replace(/[^0-9]/g, '');
-            if (!codeDigits) {
-                showToast('Please select a country code', 'error');
-                return;
-            }
-
-            // Store in standard E.164 style, e.g. +254712345678
-            const fullPhone = `+${codeDigits}${phoneDigits}`;
-
-            btn.textContent = 'Saving...';
+            btn.textContent = '...';
             btn.disabled = true;
 
             try {
@@ -1064,8 +1049,8 @@ async function loadUserProfile() {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    btn.textContent = 'Saved ✓';
-                    showToast(`Owner phone set to ${fullPhone}`, 'success');
+                    btn.textContent = '✓';
+                    showToast('Owner phone updated successfully!', 'success');
                     setTimeout(() => btn.textContent = originalText, 2000);
                 } else {
                     showToast('Failed to save owner phone', 'error');

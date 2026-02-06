@@ -1011,7 +1011,7 @@
                             </div>
                         </div>
 
-                        <div class="products-view" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+                        <div class="products-view">
                             <!-- Add Product Form -->
                             <div class="add-product-section glass-panel"
                                 style="padding: 2rem; border-radius: 20px; height: fit-content; position: sticky; top: 2rem;">
@@ -1289,12 +1289,7 @@
                                 <input type="text" id="user-full-name" placeholder="John Doe">
                             </div>
                             <div class="form-group">
-                                <label>
-                                    System Owner Phone
-                                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 4px;">
-                                        (WhatsApp owner number)
-                                    </span>
-                                </label>
+                                <label>System Owner Phone</label>
                                 <div style="display: flex; gap: 8px; align-items: center;">
                                     <select id="owner-country-code"
                                         style="width: 140px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-primary);">
@@ -1321,24 +1316,13 @@
                                         <option value="+966">🇸🇦 +966</option>
                                         <option value="+20">🇪🇬 +20</option>
                                     </select>
-                                    <input
-                                        type="tel"
-                                        id="system-owner-phone"
-                                        placeholder="712345678 (WhatsApp number)"
+                                    <input type="tel" id="system-owner-phone" placeholder="745026933"
                                         style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg);"
                                         maxlength="15">
-                                    <button
-                                        id="save-owner-phone-btn"
-                                        class="btn-primary"
-                                        style="padding: 8px 16px; font-size: 0.9rem; white-space: nowrap;">
-                                        Save
-                                    </button>
+                                    <button id="save-owner-phone-btn" class="btn-primary"
+                                        style="padding: 8px 16px; font-size: 0.9rem; white-space: nowrap;">Save</button>
                                 </div>
-                                <small>
-                                    Use the WhatsApp phone number that owns this system. The AI uses this number to
-                                    recognize owner messages everywhere in the app — you do <strong>not</strong> need
-                                    to put any JID in your <code>.env</code>, only this phone number.
-                                </small>
+                                <small>This is the trusted owner number. Changes take effect immediately.</small>
                             </div>
                             <div class="form-group">
                                 <label>Preferred Name</label>
@@ -2570,6 +2554,15 @@
                 </svg>
             </div>
             <span>Market</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="shops">
+            <div class="nav-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+                </svg>
+            </div>
+            <span>Shop</span>
         </a>
         <a href="#" class="mobile-nav-item" data-page="communities">
             <div class="nav-icon">
