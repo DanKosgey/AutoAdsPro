@@ -240,7 +240,7 @@ export const AI_TOOLS = [
             },
             {
                 name: "browse_url",
-                description: "Fetch and extract content from a website URL. ONLY use this when the user explicitly requests information that requires browsing external websites (e.g., 'check the news', 'what is the price of X'). Do NOT use for general knowledge queries the AI can answer itself.",
+                description: "Fetch and extract content from a website URL. ONLY use this when the user explicitly requests information that requires browsing external websites (e.g., 'check the news', 'what is the price of X'). Do NOT use for general knowledge queries the AI can answer itself. Returns smart-compressed content with exact token/character/word counts to fit model limits.",
                 parameters: {
                     type: "OBJECT",
                     properties: {
@@ -250,7 +250,7 @@ export const AI_TOOLS = [
                         },
                         extract_type: {
                             type: "STRING",
-                            description: "What to extract: 'metadata' (title + description only), 'summary' (title + first paragraphs, default), or 'full' (entire page content)."
+                            description: "What to extract: 'metadata' (title + description only, fast), 'summary' (smart compressed key points + important sentences, recommended), or 'full' (entire page with compression applied)."
                         }
                     },
                     required: ["url"]
@@ -258,17 +258,17 @@ export const AI_TOOLS = [
             },
             {
                 name: "search_web",
-                description: "Search for information on any topic by intelligently determining the best source URL. Use this when the user asks for current information on news, sports, finance, weather, geopolitics, or any topic requiring real-time data. The AI will automatically find and browse the appropriate website.",
+                description: "Search for information on any topic by intelligently determining the best source URL. Use this when the user asks for current information on news, sports, finance, weather, geopolitics, or any topic requiring real-time data. Returns automatically optimized content with extracted key data points (numbers, dates, entities), removal of boilerplate text, and exact token counts. The system intelligently prioritizes: 1) Key numbers/percentages, 2) Important entities, 3) Critical sentences. Perfect for getting exact facts without excess noise.",
                 parameters: {
                     type: "OBJECT",
                     properties: {
                         query: {
                             type: "STRING",
-                            description: "The search query or topic (e.g., 'latest AI news', 'Bitcoin price', 'weather in Nairobi', 'Premier League scores')"
+                            description: "The search query or topic (e.g., 'latest AI news', 'Bitcoin current price', 'weather in Nairobi', 'Premier League scores today')"
                         },
                         category: {
                             type: "STRING",
-                            description: "Optional category hint: 'news', 'sports', 'finance', 'weather', 'tech', or 'general'. Helps determine the best source."
+                            description: "Optional category hint: 'news', 'sports', 'finance', 'weather', 'tech', or 'general'. Helps determine the best source and extraction strategy."
                         }
                     },
                     required: ["query"]

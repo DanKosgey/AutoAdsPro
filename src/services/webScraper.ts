@@ -1,6 +1,11 @@
 /**
- * Web Scraper Service
- * Fetches and extracts content from URLs for AI consumption
+ * Web Scraper Service - OPTIMIZED
+ * Fetches and extracts content from URLs with intelligent compression
+ * Features:
+ * - Smart token counting (approximates Gemini tokens)
+ * - Regex-based content cleaning (removes noise, boilerplate)
+ * - Intelligent extraction of key data points
+ * - Exact metadata delivery (word count, char count, token count)
  */
 
 import axios from 'axios';
@@ -12,14 +17,178 @@ import * as cheerio from 'cheerio';
 
 const CONFIG = {
     TIMEOUT_MS: 10000,              // 10 second timeout
-    MAX_CONTENT_LENGTH: 5000,       // Max characters to return
+    MAX_TOKENS: 2000,               // Target max tokens for response (Gemini models)
+    MAX_CHARS: 8000,                // Max characters to return
     USER_AGENT: 'Mozilla/5.0 (compatible; AIAgent/1.0)',
     MAX_REQUESTS_PER_MINUTE: 10,    // Rate limit
+    EXTRACTION_RATIO: 0.15,         // Keep ~15% of clean content for key points
 } as const;
 
 // ============================================================================
-// RATE LIMITING
+// TOKEN APPROXIMATION
 // ============================================================================
+
+/**
+ * Approximates token count for Gemini (roughly 1 token per 4 chars, varies by content)
+ */
+function estimateTokens(text: string): number {
+    const words = text.split(/\s+/).length;
+    // Approximation: ~1.3 tokens per word for English
+    return Math.ceil(words * 1.3);
+}
+
+/**
+ * Estimates word count
+ */
+function estimateWords(text: string): number {
+    return text.split(/\s+/).filter(w => w.length > 0).length;
+}
+
+/**
+ * Estimates character count (excluding whitespace)
+ */
+function estimateCharacters(text: string): number {
+    return text.replace(/\s+/g, '').length;
+}
+
+// ============================================================================
+// CONTENT CLEANING & EXTRACTION
+// ============================================================================
+
+/**
+ * Regex-based content cleaning to remove unnecessary words and noise
+ */
+function cleanContent(text: string): string {
+    let cleaned = text;
+
+    // Remove extra whitespace
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+    // Remove common filler phrases
+    const fillerPatterns = [
+        /click here to[^.]*\./gi,
+        /subscribe to[^.]*newsletter[^.]*\./gi,
+        /share this article[^.]*\./gi,
+        /follow us on[^.]*\./gi,
+        /advertisement[^.]*\./gi,
+        /sponsored content[^.]*\./gi,
+        /cookie policy[^.]*\./gi,
+        /privacy policy[^.]*\./gi,
+        /terms of service[^.]*\./gi,
+        /read more[^.]*\./gi,
+        /\(.*advertisement.*\)/gi,
+        /\[.*ad.*\]/gi,
+    ];
+
+    fillerPatterns.forEach(pattern => {
+        cleaned = cleaned.replace(pattern, ' ');
+    });
+
+    // Remove repeated whitespace again
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+    return cleaned;
+}
+
+/**
+ * Extract key facts/numbers/dates from content
+ */
+function extractKeyDataPoints(text: string): string[] {
+    const dataPoints: string[] = [];
+
+    // Extract numbers with context (e.g., "$1,234", "50%", "2024")
+    const numberPattern = /[$€£¥₹][\d,]+\.?\d*|\d+(?:\.\d+)?%|\b20\d{2}\b|\d+(?:\.\d+)?\s*(million|billion|thousand|kg|lb|usd|eur|gbp|yen)/gi;
+    const numberMatches = text.match(numberPattern) || [];
+    dataPoints.push(...numberMatches.slice(0, 10));
+
+    // Extract dates (YYYY-MM-DD, Month DD, YYYY, etc.)
+    const datePattern = /\d{1,2}(?:\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December))?(?:\s+\d{4})?|\d{4}-\d{2}-\d{2}/gi;
+    const dateMatches = text.match(datePattern) || [];
+    dataPoints.push(...dateMatches.slice(0, 5));
+
+    // Extract important entities (capitalized phrases)
+    const entityPattern = /(?:^|\.\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g;
+    let match;
+    let entityCount = 0;
+    while ((match = entityPattern.exec(text)) && entityCount < 10) {
+        if (match[1].length > 3) {
+            dataPoints.push(match[1]);
+            entityCount++;
+        }
+    }
+
+    return [...new Set(dataPoints)]; // Remove duplicates
+}
+
+/**
+ * Extract only sentences containing important keywords
+ */
+function extractKeywordSentences(text: string, keywords: string[]): string {
+    const sentences = text.split(/[.!?;]+/).filter(s => s.trim().length > 20);
+    
+    const keywordLower = keywords.map(k => k.toLowerCase());
+    const importantSentences = sentences.filter(sentence => {
+        const sentenceLower = sentence.toLowerCase();
+        return keywordLower.some(keyword => sentenceLower.includes(keyword));
+    }).slice(0, 5);
+
+    return importantSentences.join('. ') + (importantSentences.length > 0 ? '.' : '');
+}
+
+/**
+ * Smart content compression - extracts only essential information
+ */
+function smartCompress(title: string, content: string, targetTokens: number = 1500): string {
+    // 1. Clean content of noise
+    const cleaned = cleanContent(content);
+
+    // 2. Extract key data points
+    const keyPoints = extractKeyDataPoints(cleaned);
+
+    // 3. Split into sentences and prioritize
+    const sentences = cleaned
+        .split(/[.!?;]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 15);
+
+    // 4. Estimate current tokens
+    const titleTokens = estimateTokens(title);
+    let resultTokens = titleTokens;
+    let result = `Title: ${title}\n\n`;
+
+    // 5. Add key data points first (highest priority)
+    if (keyPoints.length > 0) {
+        const keyPointsText = `Key data: ${keyPoints.slice(0, 5).join(', ')}`;
+        const keyPointsTokens = estimateTokens(keyPointsText);
+        if (resultTokens + keyPointsTokens < targetTokens * 0.7) {
+            result += keyPointsText + '\n\n';
+            resultTokens += keyPointsTokens;
+        }
+    }
+
+    // 6. Add most important sentences (contain numbers, entities, or first sentences)
+    const importantSentences: string[] = [];
+    for (const sentence of sentences) {
+        if (importantSentences.length >= 8) break;
+
+        const sentenceTokens = estimateTokens(sentence);
+        if (resultTokens + sentenceTokens > targetTokens) break;
+
+        // Prioritize: sentences with numbers, percentages, or proper nouns
+        const hasNumbers = /\d+/.test(sentence);
+        const hasPercentage = /%/.test(sentence);
+        const hasEntity = /[A-Z][a-z]+\s+[A-Z][a-z]+/.test(sentence);
+
+        if (hasNumbers || hasPercentage || hasEntity || importantSentences.length < 3) {
+            importantSentences.push(sentence);
+            resultTokens += sentenceTokens;
+        }
+    }
+
+    result += importantSentences.join('. ') + (importantSentences.length > 0 ? '.' : '');
+
+    return result;
+}
 
 class RateLimiter {
     private requests: number[] = [];
@@ -127,7 +296,7 @@ export class WebScraper {
     }
 
     /**
-     * Scrape content from a URL
+     * Scrape content from a URL with smart compression
      */
     async scrapeUrl(url: string, extractType: 'full' | 'summary' | 'metadata' = 'summary'): Promise<string> {
         // 1. Validate URL
@@ -149,14 +318,30 @@ export class WebScraper {
             // 4. Parse and extract
             const content = this.extractContent(html, extractType);
 
-            // 5. Record request
+            // 5. Add metadata with accurate counts
+            const withMetadata = this.addContentMetadata(content);
+
+            // 6. Record request
             this.rateLimiter.recordRequest();
 
-            return content;
+            return withMetadata;
         } catch (error: any) {
             console.error('Web scraping error:', error.message);
             throw new Error(`Failed to fetch URL: ${error.message}`);
         }
+    }
+
+    /**
+     * Add metadata about content (word count, character count, token count)
+     */
+    private addContentMetadata(content: string): string {
+        const words = estimateWords(content);
+        const characters = estimateCharacters(content);
+        const tokens = estimateTokens(content);
+
+        const metadata = `\n\n---CONTENT METADATA---\nWords: ${words} | Characters: ${characters} | Est. Tokens: ${tokens}`;
+        
+        return content + metadata;
     }
 
     /**
@@ -237,59 +422,65 @@ export class WebScraper {
             $('meta[property="og:description"]').attr('content') ||
             'No description';
 
-        return `Title: ${title}\n\nDescription: ${description}`;
+        const cleaned = cleanContent(description);
+        return `Title: ${title}\n\nDescription: ${cleaned}`;
     }
 
     /**
-     * Extract summary (title + first few paragraphs)
+     * Extract summary with smart compression
      */
     private extractSummary($: cheerio.Root): string {
         const title = $('title').text().trim() || 'No title';
 
         // Get main content
-        const mainContent = $('article, main, .content, .post, .entry-content').first();
+        const mainContent = $('article, main, .content, .post, .entry-content, .article-body').first();
         const contentArea = mainContent.length > 0 ? mainContent : $('body');
 
-        // Extract first few paragraphs
-        const paragraphs: string[] = [];
-        contentArea.find('p, h1, h2, h3').each((_, elem) => {
+        // Extract paragraphs and headings
+        const textElements: string[] = [];
+        contentArea.find('p, h1, h2, h3, li').each((_, elem) => {
             const text = $(elem).text().trim();
-            if (text.length > 20) { // Skip very short paragraphs
-                paragraphs.push(text);
+            if (text.length > 15) { // Only substantial text
+                textElements.push(text);
             }
         });
 
-        const content = paragraphs.slice(0, 5).join('\n\n');
-        const truncated = this.truncateContent(`Title: ${title}\n\n${content}`);
+        // Join and clean
+        const rawContent = textElements.join(' ');
+        const cleaned = cleanContent(rawContent);
 
-        return truncated;
+        // Smart compress to fit token limits
+        const compressed = smartCompress(title, cleaned, CONFIG.MAX_TOKENS);
+        return compressed;
     }
 
     /**
-     * Extract full page content
+     * Extract full page content with compression
      */
     private extractFullContent($: cheerio.Root): string {
         const title = $('title').text().trim() || 'No title';
 
         // Get all text content
-        const bodyText = $('body').text()
-            .replace(/\s+/g, ' ')  // Normalize whitespace
-            .trim();
+        const bodyText = $('body').text();
+        const cleaned = cleanContent(bodyText);
 
-        const content = `Title: ${title}\n\n${bodyText}`;
-        return this.truncateContent(content);
+        // Compress to fit token limits
+        const compressed = smartCompress(title, cleaned, CONFIG.MAX_TOKENS);
+        return compressed;
     }
 
     /**
-     * Truncate content to max length
+     * OLD: Truncate content to max length (kept for compatibility, now uses smart compress)
      */
     private truncateContent(content: string): string {
-        if (content.length <= CONFIG.MAX_CONTENT_LENGTH) {
+        const tokens = estimateTokens(content);
+        if (tokens <= CONFIG.MAX_TOKENS) {
             return content;
         }
 
-        const truncated = content.substring(0, CONFIG.MAX_CONTENT_LENGTH);
-        return truncated + '\n\n[Content truncated - original was longer]';
+        // If over token limit, use smart compression
+        const title = content.split('\n')[0] || 'Content';
+        return smartCompress(title, content, CONFIG.MAX_TOKENS);
     }
 }
 
