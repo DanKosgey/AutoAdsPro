@@ -8,6 +8,7 @@ import { db, testConnection } from './database';
 import { contacts, messageLogs, authCredentials, aiProfile, userProfile, businessProfile, marketingCampaigns } from './database/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { sessionManager } from './services/sessionManager';
+import { groupMetadataLimiter } from './utils/rateLimiter';
 
 const app = express();
 app.use(cors());
@@ -667,27 +668,31 @@ app.get('/api/marketing/groups', async (req, res) => {
             selectedGroups = [];
         }
 
-        // Fetch group metadata for each group
-        const groups = await Promise.all(groupJids.map(async (jid: string) => {
+        // Fetch group metadata for each group using rate limiting to avoid 429 errors
+        const groups = [];
+        for (const jid of groupJids) {
             try {
                 const isSelected = selectedGroups.includes(jid);
-                const metadata = await whatsappClient['sock']?.groupMetadata(jid);
-                return {
+                const metadata = await groupMetadataLimiter.execute(
+                    () => whatsappClient['sock']?.groupMetadata(jid),
+                    `groups-endpoint(${jid})`
+                );
+                groups.push({
                     id: jid,
                     name: metadata?.subject || 'Unknown Group',
                     participants: metadata?.participants?.length || 0,
                     selected: isSelected
-                };
+                });
             } catch (error) {
                 console.error(`Failed to fetch metadata for ${jid}:`, error);
-                return {
+                groups.push({
                     id: jid,
-                    name: 'Unknown Group',
+                    name: 'Unknown Group (Load Error)',
                     participants: 0,
                     selected: selectedGroups.includes(jid)
-                };
+                });
             }
-        }));
+        }
 
         res.json({ success: true, groups });
     } catch (error) {

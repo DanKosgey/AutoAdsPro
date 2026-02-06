@@ -21,6 +21,7 @@ import { messageQueueService } from '../services/queue/messageQueue';
 import { WorkerPool } from '../services/queue/workerPool';
 import { schedulerService } from '../services/scheduler';
 import { ConcurrencyController } from '../services/queue/concurrencyController';
+import { groupMetadataLimiter } from '../utils/rateLimiter';
 
 export class WhatsAppClient {
   private sock: WASocket | undefined;
@@ -110,7 +111,10 @@ export class WhatsAppClient {
   public async getGroupMetadata(jid: string) {
     if (!this.sock) return null;
     try {
-      return await this.sock.groupMetadata(jid);
+      return await groupMetadataLimiter.execute(
+        () => this.sock!.groupMetadata(jid),
+        `getGroupMetadata(${jid})`
+      );
     } catch (error) {
       console.error(`Failed to fetch metadata for ${jid}:`, error);
       return null;
@@ -290,13 +294,23 @@ export class WhatsAppClient {
     // Track Group Updates
     this.sock.ev.on('groups.update', async (updates) => {
       const { groupService } = await import('../services/groupService');
+      
+      // Process group updates with rate limiting to avoid 429 errors
       for (const update of updates) {
         try {
-          // Fetch full metadata again to be safe/simple
-          const metadata = await this.sock!.groupMetadata(update.id!);
+          // Use rate limiter to fetch metadata with exponential backoff
+          const metadata = await groupMetadataLimiter.execute(
+            () => this.sock!.groupMetadata(update.id!),
+            `groups.update(${update.id})`
+          );
           await groupService.syncGroup(update.id!, metadata);
         } catch (e) {
-          console.error(`Failed to sync updated group ${update.id}:`, e);
+          const isRateLimit = (e as any)?.data === 429 || (e as any)?.message?.includes('rate-overlimit');
+          if (isRateLimit) {
+            console.warn(`⏱️ Rate limited while syncing group ${update.id}, will retry on next update event`);
+          } else {
+            console.error(`Failed to sync updated group ${update.id}:`, e);
+          }
         }
       }
     });
