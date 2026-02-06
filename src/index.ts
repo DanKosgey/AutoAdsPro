@@ -9,6 +9,7 @@ import { contacts, messageLogs, authCredentials, aiProfile, userProfile, busines
 import { eq, desc, sql } from 'drizzle-orm';
 import { sessionManager } from './services/sessionManager';
 import { groupMetadataLimiter } from './utils/rateLimiter';
+import { initializeDatabase } from './database/initialize';
 
 const app = express();
 app.use(cors());
@@ -17,10 +18,6 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static files from public directory
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
-
-// Run Database Initialization (formerly "migrations")
-import { initializeDatabase } from './database/initialize';
-initializeDatabase().catch(console.error);
 
 // Initialize Clients
 const whatsappClient = new WhatsAppClient();
@@ -911,7 +908,16 @@ const start = async () => {
     try {
         console.log('🚀 Starting Autonomous Representative Agent...');
 
-        // 1. Start API Server FIRST (so health checks pass immediately)
+        // 0. Initialize Database FIRST - Wait for migrations to complete
+        console.log('🗄️ Initializing database and running migrations...');
+        const dbInitialized = await initializeDatabase();
+        if (!dbInitialized) {
+            console.warn('⚠️ Database initialization completed with warnings, continuing startup...');
+        } else {
+            console.log('✅ Database initialization successful');
+        }
+
+        // 1. Start API Server
         const PORT = config.port;
         const server = app.listen(PORT, () => {
             console.log(`🌍 API Server running on port ${PORT}`);
