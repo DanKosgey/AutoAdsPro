@@ -31,10 +31,38 @@ export class GroupMetadataCache {
   private readonly CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour default TTL
   private readonly DB_CACHE_TTL_MS: number;
   private cleanupInterval: NodeJS.Timeout | null = null;
+  private tablesInitialized = false;
+  private dbAvailable = true;
 
   constructor(cacheTtlHours: number = 1) {
     this.DB_CACHE_TTL_MS = cacheTtlHours * 60 * 60 * 1000;
     this.startCleanupInterval();
+  }
+
+  /**
+   * Initialize database - check if tables exist
+   */
+  private async ensureTablesExist(): Promise<void> {
+    if (this.tablesInitialized) return;
+    
+    try {
+      // Try a simple query to verify tables exist
+      await db.query.groups.findFirst();
+      this.tablesInitialized = true;
+      this.dbAvailable = true;
+      console.log('✅ Groups tables verified - cache database operations enabled');
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      if (errorMsg.includes('does not exist') || errorMsg.includes('42P01')) {
+        console.warn('⚠️ Groups tables do not exist yet - running in memory-only mode');
+        console.warn('   Run: npm run create-groups-tables');
+        this.dbAvailable = false;
+      } else {
+        console.error('⚠️ Could not verify groups tables:', errorMsg);
+        this.dbAvailable = false;
+      }
+      this.tablesInitialized = true;
+    }
   }
 
   /**
@@ -55,39 +83,54 @@ export class GroupMetadataCache {
       return inMemory.data;
     }
 
-    // Level 2: Check database cache
-    try {
-      const dbCache = await db.query.groups.findFirst({
-        where: eq(groups.jid, jid)
-      });
-
-      if (dbCache && dbCache.updatedAt) {
-        const cacheAge = now - dbCache.updatedAt.getTime();
+    // Level 2: Check database cache (if available)
+    if (this.dbAvailable) {
+      try {
+        await this.ensureTablesExist();
         
-        if (cacheAge < this.DB_CACHE_TTL_MS) {
-          console.log(`✅ Cache HIT (database): ${jid} - age: ${Math.round(cacheAge / 1000)}s`);
-          
-          const result: CachedGroupMetadata = {
-            jid: dbCache.jid,
-            subject: dbCache.subject || 'Unknown',
-            description: dbCache.description || undefined,
-            totalMembers: dbCache.totalMembers || 0,
-            adminsCount: dbCache.adminsCount || 0,
-            updatedAt: dbCache.updatedAt,
-            cached: true
-          };
-
-          // Populate in-memory cache for next access
-          this.inMemoryCache.set(jid, { data: result, timestamp: now });
-          return result;
-        } else {
-          console.log(`⏱️ Cache STALE (database): ${jid} - age: ${Math.round(cacheAge / 1000)}s (TTL: ${this.DB_CACHE_TTL_MS / 1000}s)`);
+        if (!this.dbAvailable) {
+          console.log(`⚠️ Cache DB unavailable: ${jid} - using memory-only cache`);
+          return null;
         }
-      } else {
-        console.log(`❌ Cache MISS (database): ${jid} - not in DB`);
+
+        const dbCache = await db.query.groups.findFirst({
+          where: eq(groups.jid, jid)
+        });
+
+        if (dbCache && dbCache.updatedAt) {
+          const cacheAge = now - dbCache.updatedAt.getTime();
+          
+          if (cacheAge < this.DB_CACHE_TTL_MS) {
+            console.log(`✅ Cache HIT (database): ${jid} - age: ${Math.round(cacheAge / 1000)}s`);
+            
+            const result: CachedGroupMetadata = {
+              jid: dbCache.jid,
+              subject: dbCache.subject || 'Unknown',
+              description: dbCache.description || undefined,
+              totalMembers: dbCache.totalMembers || 0,
+              adminsCount: dbCache.adminsCount || 0,
+              updatedAt: dbCache.updatedAt,
+              cached: true
+            };
+
+            // Populate in-memory cache for next access
+            this.inMemoryCache.set(jid, { data: result, timestamp: now });
+            return result;
+          } else {
+            console.log(`⏱️ Cache STALE (database): ${jid} - age: ${Math.round(cacheAge / 1000)}s (TTL: ${this.DB_CACHE_TTL_MS / 1000}s)`);
+          }
+        } else {
+          console.log(`❌ Cache MISS (database): ${jid} - not in DB`);
+        }
+      } catch (error: any) {
+        const errorMsg = error?.message || String(error);
+        if (errorMsg.includes('does not exist') || errorMsg.includes('42P01')) {
+          this.dbAvailable = false;
+          console.warn(`⚠️ Database cache unavailable for ${jid} - using memory only`);
+        } else {
+          console.error(`⚠️ Cache query error for ${jid}:`, errorMsg);
+        }
       }
-    } catch (error) {
-      console.error(`⚠️ Cache query error for ${jid}:`, error);
     }
 
     // Level 3: Return null - caller should fetch from API
@@ -97,7 +140,7 @@ export class GroupMetadataCache {
   /**
    * Set cached metadata (from API fetch)
    */
-  setFromApi(jid: string, metadata: any): CachedGroupMetadata {
+  async setFromApi(jid: string, metadata: any): Promise<CachedGroupMetadata> {
     const now = Date.now();
     
     const result: CachedGroupMetadata = {
@@ -113,7 +156,56 @@ export class GroupMetadataCache {
     // Store in in-memory cache
     this.inMemoryCache.set(jid, { data: result, timestamp: now });
     
-    console.log(`💾 Cached (memory + DB): ${jid}`);
+    // Try to store in database cache (if available)
+    if (this.dbAvailable) {
+      try {
+        await this.ensureTablesExist();
+        
+        if (this.dbAvailable) {
+          // Try to insert, if it exists, update instead
+          try {
+            await db.insert(groups).values({
+              jid: jid,
+              subject: result.subject,
+              description: result.description,
+              totalMembers: result.totalMembers,
+              adminsCount: result.adminsCount,
+              updatedAt: result.updatedAt
+            });
+          } catch (insertError: any) {
+            // If insert fails (e.g., duplicate key), try update
+            if (insertError?.message?.includes('duplicate') || insertError?.code === '23505') {
+              await db.update(groups)
+                .set({
+                  subject: result.subject,
+                  description: result.description,
+                  totalMembers: result.totalMembers,
+                  adminsCount: result.adminsCount,
+                  updatedAt: result.updatedAt
+                })
+                .where(eq(groups.jid, jid));
+            } else {
+              throw insertError;
+            }
+          }
+          
+          console.log(`💾 Cached (memory + DB): ${jid}`);
+        } else {
+          console.log(`💾 Cached (memory only): ${jid}`);
+        }
+      } catch (error: any) {
+        const errorMsg = error?.message || String(error);
+        if (errorMsg.includes('does not exist') || errorMsg.includes('42P01')) {
+          this.dbAvailable = false;
+          console.warn(`⚠️ Could not save to DB cache: tables do not exist - memory only for ${jid}`);
+        } else {
+          console.error(`⚠️ Could not save to DB cache for ${jid}:`, errorMsg);
+        }
+      }
+    } else {
+      console.log(`💾 Cached (memory only): ${jid}`);
+    }
+    
     return result;
   }
 

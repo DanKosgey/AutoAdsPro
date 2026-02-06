@@ -147,7 +147,7 @@ export class WhatsAppClient {
 
       if (metadata) {
         // Store in cache
-        const cached = groupMetadataCacheService.setFromApi(jid, metadata);
+        const cached = await groupMetadataCacheService.setFromApi(jid, metadata);
         return cached;
       }
       return null;

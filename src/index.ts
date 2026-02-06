@@ -18,9 +18,9 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Run Migrations
-import { runMigrations } from './database/migrate';
-runMigrations().catch(console.error);
+// Run Database Initialization (formerly "migrations")
+import { initializeDatabase } from './database/initialize';
+initializeDatabase().catch(console.error);
 
 // Initialize Clients
 const whatsappClient = new WhatsAppClient();
@@ -736,10 +736,18 @@ app.get('/api/shops', async (req, res) => {
     try {
         const { shopService } = await import('./services/shopService');
         const shops = await shopService.getAllShops();
-        res.json(shops);
-    } catch (error) {
-        console.error('Failed to fetch shops:', error);
-        res.status(500).json({ error: 'Failed to fetch shops' });
+        // Ensure we always return an array
+        res.json(Array.isArray(shops) ? shops : []);
+    } catch (error: any) {
+        console.error('Failed to fetch shops:', error.message);
+        // Return empty array instead of error to prevent client-side .map() errors
+        // Client will show "No shops" instead of crashing
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+            console.warn('⚠️ Shops table does not exist yet - returning empty array');
+            res.json([]);
+        } else {
+            res.status(500).json({ error: 'Failed to fetch shops' });
+        }
     }
 });
 
