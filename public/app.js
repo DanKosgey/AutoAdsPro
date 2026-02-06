@@ -310,7 +310,7 @@ function updateConnectionStatus(status, qr = null) {
             label.textContent = 'Waiting for QR';
             detail.textContent = 'Scan to connect';
             showQRCode(qr);
-            hideOnboardingOverlay();
+            showOnboardingOverlay();
             break;
         default:
             indicator.classList.add('disconnected');
