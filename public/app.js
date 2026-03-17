@@ -808,6 +808,15 @@ async function loadSettings() {
                 calendarAccessToggle.checked = calendarAccessEnabled;
                 updateCalendarAccessStatus(calendarAccessEnabled);
             }
+
+            // Load Chat Agent Status
+            const chatAgentToggle = document.getElementById('chat-agent-toggle');
+            const chatAgentStatus = document.getElementById('chat-agent-status-text');
+            if (chatAgentToggle && chatAgentStatus) {
+                const chatAgentEnabled = s['chat_agent_enabled'] !== 'false'; // Default to true if not set
+                chatAgentToggle.checked = chatAgentEnabled;
+                updateChatAgentStatus(chatAgentEnabled);
+            }
         }
     } catch (error) {
         console.error('Failed to load system settings:', error);
@@ -837,6 +846,22 @@ function updateCalendarAccessStatus(isEnabled) {
             statusEl.style.color = 'var(--success, #10b981)';
         } else {
             statusEl.innerHTML = '🔒 <strong>Calendar access disabled</strong> — Scheduling features are hidden';
+            statusEl.style.color = 'var(--warning, #f59e0b)';
+        }
+    }
+}
+
+function updateChatAgentStatus(isEnabled) {
+    const statusIcon = document.getElementById('chat-agent-status-icon');
+    const statusEl = document.getElementById('chat-agent-status-text');
+    if (statusIcon && statusEl) {
+        if (isEnabled) {
+            statusIcon.textContent = '✅';
+            statusEl.innerHTML = '<strong>Chat Agent: ENABLED</strong> — AI will auto-reply to incoming DMs';
+            statusEl.style.color = 'var(--success, #10b981)';
+        } else {
+            statusIcon.textContent = '🔇';
+            statusEl.innerHTML = '<strong>Chat Agent: DISABLED</strong> — Bot will only broadcast ads';
             statusEl.style.color = 'var(--warning, #f59e0b)';
         }
     }
@@ -1106,6 +1131,97 @@ function initializeSettings() {
                 showToast('Failed to update calendar access', 'error');
             } finally {
                 calendarAccessToggle.disabled = false;
+            }
+        });
+    }
+
+    // Chat Agent Control Toggle
+    const chatAgentToggle = document.getElementById('chat-agent-toggle');
+    if (chatAgentToggle) {
+        chatAgentToggle.addEventListener('change', async (event) => {
+            // Prevent event bubbling to parent elements
+            event.stopPropagation();
+            
+            const isEnabled = chatAgentToggle.checked;
+            const statusEl = document.getElementById('chat-agent-status-text');
+
+            // Disable toggle while saving
+            chatAgentToggle.disabled = true;
+            if (statusEl) statusEl.textContent = 'Updating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/settings/system`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        key: 'chat_agent_enabled',
+                        value: isEnabled ? 'true' : 'false'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success || response.ok) {
+                    updateChatAgentStatus(isEnabled);
+                    showToast(
+                        isEnabled ? '✅ Chat Agent enabled' : '🔇 Chat Agent disabled',
+                        'success'
+                    );
+                } else {
+                    throw new Error(data.error || 'Failed to update setting');
+                }
+            } catch (error) {
+                console.error('Failed to update chat agent:', error);
+                // Revert toggle on error
+                chatAgentToggle.checked = !isEnabled;
+                if (statusEl) statusEl.textContent = '❌ Error updating setting';
+                showToast('Failed to update chat agent settings', 'error');
+            } finally {
+                chatAgentToggle.disabled = false;
+            }
+        });
+    }
+
+    // Chat Agent Save Button
+    const saveChatAgentBtn = document.getElementById('save-chat-agent-btn');
+    if (saveChatAgentBtn) {
+        saveChatAgentBtn.addEventListener('click', async () => {
+            const toggle = document.getElementById('chat-agent-toggle');
+            const isEnabled = toggle ? toggle.checked : true;
+            const btn = saveChatAgentBtn;
+            const originalText = btn.textContent;
+
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/settings/system`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        key: 'chat_agent_enabled',
+                        value: isEnabled ? 'true' : 'false'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success || response.ok) {
+                    updateChatAgentStatus(isEnabled);
+                    btn.textContent = 'Saved ✓';
+                    btn.style.backgroundColor = 'var(--success, #10b981)';
+                    showToast(
+                        isEnabled ? '✅ Chat Agent enabled' : '🔇 Chat Agent disabled',
+                        'success'
+                    );
+                    setTimeout(() => { btn.textContent = originalText; btn.style.backgroundColor = ''; }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to save setting');
+                }
+            } catch (error) {
+                console.error('Failed to save chat agent settings:', error);
+                showToast('Failed to save chat agent settings', 'error');
+                btn.textContent = originalText;
+            } finally {
+                btn.disabled = false;
             }
         });
     }

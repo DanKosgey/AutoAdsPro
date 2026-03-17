@@ -660,6 +660,32 @@ Your response:`;
       return;
     }
 
+    // Check if chat agent is enabled (skip only for non-owners)
+    const { systemSettingsService } = await import('../services/systemSettings');
+    const chatAgentEnabled = await systemSettingsService.isChatAgentEnabled();
+    if (!chatAgentEnabled && !isOwner) {
+      console.log(`🔇 Chat Agent is DISABLED. Skipping AI reply for ${remoteJid}. Message will be logged but no response sent.`);
+      
+      // Still log the message for context
+      const contact = await withRetry(async () => {
+        return await db.select().from(contacts).where(eq(contacts.phone, remoteJid)).then(res => res[0]);
+      });
+      
+      if (contact) {
+        await withRetry(async () => {
+          await db.insert(messageLogs).values({
+            contactPhone: remoteJid,
+            role: 'user',
+            content: fullText,
+            type: 'text',
+            platform: 'whatsapp'
+          });
+        });
+      }
+      
+      return; // Exit without generating AI response
+    }
+
     const contact = await withRetry(async () => {
       return await db.select().from(contacts).where(eq(contacts.phone, remoteJid)).then(res => res[0]);
     });
