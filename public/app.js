@@ -1025,6 +1025,45 @@ function initializeSettings() {
         }
     });
 
+    // Reset Database Button
+    document.getElementById('reset-database-btn')?.addEventListener('click', async () => {
+        const confirmMessage = 'WARNING: This will permanently delete ALL data from all database tables. This action CANNOT be undone.\n\nAre you absolutely sure you want to continue?';
+        if (confirm(confirmMessage)) {
+            const secondConfirm = confirm('⚠️ FINAL WARNING: This will erase:\n- All contacts\n- All messages\n- All settings\n- All marketing campaigns\n- All shops & products\n- All schedules\n\nType your confirmation by clicking OK if you\'re certain.');
+            if (secondConfirm) {
+                const btn = document.getElementById('reset-database-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Resetting...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/admin/reset-database`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        btn.textContent = 'Reset ✓';
+                        alert('✅ Database successfully reset! All data has been erased.\n\nThe app will now reload.');
+                        
+                        // Reload the page to refresh the UI
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        throw new Error(data.error || 'Reset failed');
+                    }
+                } catch (error) {
+                    console.error('Database reset failed:', error);
+                    alert('❌ Reset failed: ' + error.message);
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            }
+        }
+    });
+
     // Calendar Access Control Toggle
     const calendarAccessToggle = document.getElementById('calendar-access-toggle');
     if (calendarAccessToggle) {
