@@ -36,6 +36,8 @@ export class WhatsAppClient {
   private qrCode: string | null = null;
   private lastConnectTime: number = 0;
   private isLoggingOut: boolean = false;
+  private authResetAttempts: number = 0;
+  private maxAuthResetAttempts: number = 3;
 
   constructor() { }
 
@@ -170,6 +172,7 @@ export class WhatsAppClient {
 
   async initialize() {
     this.isLoggingOut = false;
+    this.authResetAttempts = 0; // Reset counter on manual initialization
     console.log('🔌 Initializing Representative Agent...');
 
     console.log('🔒 Attempting to acquire session lock...');
@@ -230,21 +233,32 @@ export class WhatsAppClient {
         }
 
         if (error === 405) {
+          this.authResetAttempts++;
           console.log('❌ Session data is corrupted or invalid (405 error).');
-          console.log('🧹 Auto-clearing corrupted auth data...');
+          console.log(`🧹 Auto-clearing corrupted auth data... (Attempt ${this.authResetAttempts}/${this.maxAuthResetAttempts})`);
+
           try {
             await db.delete(authCredentials);
             console.log('✅ Auth credentials cleared automatically.');
           } catch (deleteError) {
             console.warn('⚠️ Failed to clear auth credentials:', deleteError);
           }
-          // Destroy current socket and re-initialize to generate new QR code
+
+          // Destroy current socket
           this.sock = undefined;
           this.qrCode = null;
           this.reconnectAttempts = 0;
           await sessionManager.releaseLock();
+
+          if (this.authResetAttempts >= this.maxAuthResetAttempts) {
+            console.log('❌ Max auth reset attempts reached. WhatsApp may be blocked in this environment.');
+            console.log('💡 Try connecting from a different IP or check WhatsApp Web access.');
+            console.log('🔄 Server will continue running. Manual QR scan required for WhatsApp connection.');
+            return;
+          }
+
           console.log('🔄 Re-initializing to generate new QR code...');
-          setTimeout(() => this.initialize(), 1000);
+          setTimeout(() => this.initialize(), 2000); // Increased delay
           return;
         }
 
@@ -297,6 +311,7 @@ export class WhatsAppClient {
         console.log('✅ Representative Online!');
         this.qrCode = null;
         this.lastConnectTime = Date.now();
+        this.authResetAttempts = 0; // Reset on successful connection
 
         this.messageSender = new MessageSender(this.sock!);
         this.conversationManager = new ConversationManager();
