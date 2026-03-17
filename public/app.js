@@ -1024,26 +1024,36 @@ function initializeSettings() {
                 const data = await response.json();
 
                 if (data.success) {
-                    btn.textContent = 'Disconnected ✓';
+                    btn.textContent = 'Disconnecting...';
 
                     // Show success message
-                    alert('Disconnected successfully! The app will now show a QR code for you to scan.');
+                    showToast('Disconnected successfully! Generating new QR code...', 'success');
 
                     // Switch to dashboard to show QR code
                     switchPage('dashboard');
 
-                    // Force status check to update UI
-                    setTimeout(() => {
-                        checkStatus();
-                        btn.textContent = originalText;
-                        btn.disabled = false;
-                    }, 1000);
+                    // Wait longer for re-initialization and QR code generation
+                    // Then refresh status multiple times to catch the new QR code
+                    let attempts = 0;
+                    const maxAttempts = 5;
+                    const checkInterval = setInterval(async () => {
+                        attempts++;
+                        console.log(`🔄 Checking status for QR code (attempt ${attempts}/${maxAttempts})`);
+                        await checkStatus();
+                        
+                        if (attempts >= maxAttempts) {
+                            clearInterval(checkInterval);
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                        }
+                    }, 1500); // Check every 1.5 seconds
+
                 } else {
                     throw new Error(data.error || 'Disconnect failed');
                 }
             } catch (error) {
                 console.error('Disconnect failed:', error);
-                alert('Disconnect failed: ' + error.message);
+                showToast('Disconnect failed: ' + error.message, 'error');
                 btn.textContent = originalText;
                 btn.disabled = false;
             }

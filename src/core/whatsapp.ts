@@ -190,6 +190,17 @@ export class WhatsAppClient {
 
     console.log('✅ Session lock acquired. Proceeding with connection...');
 
+    // 🔓 Force QR Code if configured
+    if (config.forceQrCode) {
+      console.log('⚙️ FORCE_QR_CODE enabled. Clearing existing credentials to generate new QR code...');
+      try {
+        await db.delete(authCredentials);
+        console.log('✅ Credentials cleared. Fresh QR code will be generated.');
+      } catch (error) {
+        console.warn('⚠️ Failed to clear credentials:', error);
+      }
+    }
+
     const { state, saveCreds } = await usePostgresAuthState('whatsapp_session');
 
     console.log('🔍 Auth State Check:');

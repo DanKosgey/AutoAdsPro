@@ -215,13 +215,21 @@ app.post('/api/disconnect', async (req, res) => {
         // 3. Clear Auth Credentials
         await db.delete(authCredentials);
 
-        console.log('✅ Disconnected successfully. Ready for new QR scan.');
+        console.log('✅ Disconnected successfully. Re-initializing to generate new QR code...');
 
-        // 4. Send success response (NO process.exit!)
+        // 4. Re-initialize to generate fresh QR code
+        setTimeout(() => {
+            whatsappClient.initialize(true).catch(err => {
+                console.error('❌ Failed to re-initialize after disconnect:', err);
+            });
+        }, 500);
+
+        // 5. Send success response (NO process.exit!)
         res.json({
             success: true,
-            message: 'Disconnected successfully. Scan QR code to reconnect.',
-            requiresRestart: false
+            message: 'Disconnected successfully. Generating new QR code...',
+            requiresRestart: false,
+            nextAction: 'check status for QR code'
         });
 
     } catch (error) {
